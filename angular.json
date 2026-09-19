@@ -8,7 +8,20 @@
   "projects": {
     "optimus-ui": {
       "projectType": "application",
-      "schematics": {},
+      "schematics": {
+        "@schematics/angular:component": {
+          "skipTests": true
+        },
+        "@schematics/angular:service": {
+          "skipTests": true
+        },
+        "@schematics/angular:pipe": {
+          "skipTests": true
+        },
+        "@schematics/angular:directive": {
+          "skipTests": true
+        }
+      },
       "root": "",
       "sourceRoot": "src",
       "prefix": "app",
@@ -24,10 +37,7 @@
                 "input": "public"
               }
             ],
-            "styles": [
-              "@openng/icons/openng-icons.css",
-              "src/styles.css"
-            ]
+            "styles": ["@openng/icons/openng-icons.css", "src/styles.css"]
           },
           "configurations": {
             "production": {
