@@ -1,9 +1,9 @@
 import { Component, computed, inject, input } from '@angular/core';
-import { Table } from '../table/table';
+import { CustomTable } from '../table/custom-table';
 import { TestDataService } from '../../services';
 
 @Component({
-  imports: [Table],
+  imports: [CustomTable],
   selector: 'app-active-data',
   styleUrl: './active-data.css',
   templateUrl: './active-data.html',

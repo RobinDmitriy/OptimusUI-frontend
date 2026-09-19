@@ -1,5 +1,5 @@
 import { Service } from '@angular/core';
-import { IColumn } from '../components/table/table';
+import { IColumn } from '../components/table/custom-table';
 
 export interface Staffer {
   id: number;
@@ -95,7 +95,7 @@ export class TestDataService {
    * @param value - заданное значение данных
    */
   getData(value: string | null) {
-    if (value === null) return null;
+    if (value === null) return [];
 
     return value === 'Сотрудники' ? this.staffers : this.cars;
   }

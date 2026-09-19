@@ -1,4 +1,4 @@
-export { Table } from './table/table';
+export { CustomTable } from './table/custom-table';
 export { Header } from './header/header';
 
 // export {AggregationPeriods} from './aggregation-periods/aggregation-periods';

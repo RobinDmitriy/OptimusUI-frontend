@@ -1,8 +1,16 @@
 <p-card class="m-4"
         [hidden]="!showPanel()"
 >
-  <p-table [columns]="columns()"
+  <p-table #dt
+           [columns]="columns()"
            [value]="value"
+           [sortMode]="sortMode()"
+           [lazy]="true"
+           [paginator]="true"
+           [rows]="10"
+           [totalRecords]="totalRecords()"
+           [loading]="loading()"
+           (onLazyLoad)="loadData($event)"
            id="tableData"
   >
     @if (showToolbar()) {
@@ -111,8 +119,20 @@
     <ng-template #header let-columns>
       <tr>
         @for (col of columns; track col.field) {
-          <th>
-            {{ col.caption }}
+          <th [pSortableColumn]="col.field"
+              [pSortableColumnDisabled]="!isSorted()"
+              (contextmenu)="onContextMenu($event, col)"
+              [class.p-datatable-column-sorted]="sortField() === col.field && sortOrder() !== 0"
+          >
+            <div class="flex flex-row justify-between">
+              {{ col.caption }}
+              @if (sortField() === col.field && sortOrder() !== 0) {
+                <i class="pi"
+                   [class.pi-sort-amount-up-alt]="sortOrder() === 1"
+                   [class.pi-sort-amount-down]="sortOrder() === -1"
+                ></i>
+              }
+            </div>
           </th>
         }
       </tr>
@@ -133,3 +153,7 @@
     </ng-template>
   </p-table>
 </p-card>
+
+@if (isSorted()) {
+  <p-context-menu #cm />
+}
