@@ -17,6 +17,9 @@
     "@angular/forms": "^22.1.0",
     "@angular/platform-browser": "^22.1.0",
     "@angular/router": "^22.1.0",
+    "@openng/icons": "^1.0.0",
+    "@openng/optimus-ui": "^2.0.2",
+    "@openng/optimus-ui-themes": "^2.0.2",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"
   },
@@ -31,5 +34,11 @@
     "tailwindcss": "^4.1.12",
     "typescript": "~6.0.2",
     "vitest": "^4.0.8"
+  },
+  "allowScripts": {
+    "@parcel/watcher@2.6.0": true,
+    "esbuild@0.28.2": true,
+    "lmdb@3.5.6": true,
+    "msgpackr-extract@3.0.4": true
   }
 }

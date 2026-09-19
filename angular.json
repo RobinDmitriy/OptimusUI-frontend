@@ -25,6 +25,7 @@
               }
             ],
             "styles": [
+              "@openng/icons/openng-icons.css",
               "src/styles.css"
             ]
           },
