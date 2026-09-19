@@ -66,7 +66,8 @@ export class TableService {
     const rows = params.rows ?? total;
     result = result.slice(first, first + rows);
 
-    return of({ data: result, total }).pipe(delay(300));
+    // return of({ data: result, total }).pipe(delay(300));
+    return of({ data: result, total });
   }
 
   /**
