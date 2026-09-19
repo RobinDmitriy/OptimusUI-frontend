@@ -1,0 +1,46 @@
+<p-toolbar class="bg-gray-400! border-none! rounded-none!">
+  <ng-template #start>
+    <span class="text-2xl uppercase text-white font-bold">Основной заголовок</span>
+  </ng-template>
+
+  <!--  <ng-template #center>-->
+  <!--    <div class="flex items-center gap-2">-->
+  <!--      <p-tabs [value]="1">-->
+  <!--        <p-tablist>-->
+  <!--          @for (tab of tabs(); track tab.id) {-->
+  <!--            <p-tab [value]="tab.id" class="flex items-center !gap-2 text-inherit"-->
+  <!--                   (click)="onSelectedTab(tab)"-->
+  <!--            >-->
+  <!--              <i [class]="tab.icon"></i>-->
+  <!--              <span>{{ tab.text }}</span>-->
+  <!--            </p-tab>-->
+  <!--          }-->
+  <!--        </p-tablist>-->
+  <!--      </p-tabs>-->
+  <!--    </div>-->
+  <!--  </ng-template>-->
+
+  <ng-template #end>
+    <!--      <div class="flex items-center gap-3">-->
+    <!--        @if (isHiddenGlobalFiltersButton()) {-->
+    <!--          <p-button (onClick)="toggleIsShowGlobalFilter()"-->
+    <!--                    [icon]="!isShowGlobalFiltersSign() ? 'pi pi-eye' : 'pi pi-eye-slash'"-->
+    <!--                    rounded-->
+    <!--                    text-->
+    <!--                    [pTooltip]="!isShowGlobalFiltersSign() ? 'Открыть панель фильтров' : 'Скрыть панель фильтров'"-->
+    <!--                    tooltipPosition="bottom"-->
+    <!--          />-->
+    <!--        }-->
+    <!--        -->
+    <!--      </div>-->
+
+    <p-select [options]="variantData"
+              (onChange)="onChangeVariantData($event.value)"
+              [checkmark]="true"
+              [showClear]="true"
+              size="small"
+              placeholder="Выберете данные для отображения"
+    />
+
+  </ng-template>
+</p-toolbar>

@@ -1,1 +1,29 @@
-<p>table works!</p>
+<div class="card">
+  <p-table [columns]="columns()"
+           [value]="value"
+  >
+    <ng-template #header let-columns>
+      <tr>
+        @for (col of columns; track col.field) {
+          <th>
+            {{ col.caption }}
+          </th>
+        }
+      </tr>
+    </ng-template>
+
+    <ng-template #body let-rowData let-columns="columns">
+      <tr>
+        @for (col of columns; track col.field) {
+          <td>
+            @if (col.type === 'date') {
+              {{ rowData[col.field] | date: 'dd.MM.yyyy' }}
+            } @else {
+              {{ rowData[col.field] }}
+            }
+          </td>
+        }
+      </tr>
+    </ng-template>
+  </p-table>
+</div>

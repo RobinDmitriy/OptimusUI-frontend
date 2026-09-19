@@ -1,1 +1,2 @@
-<app-table></app-table>
+<app-header (selectedData)="selectedData.set($event)"></app-header>
+<app-active-data [selectedData]="selectedData()"></app-active-data>

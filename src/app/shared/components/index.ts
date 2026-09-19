@@ -1,4 +1,6 @@
 export { Table } from './table/table';
+export { Header } from './header/header';
+
 // export {AggregationPeriods} from './aggregation-periods/aggregation-periods';
 // // export * from './components/charts/pie-chart/pie-chart';
 // // export * from './components/charts/pie-chart-groups/pie-chart-groups';
@@ -19,7 +21,7 @@ export { Table } from './table/table';
 // export {EmptyData} from './empty-data/empty-data';
 // export {ExpandPanel} from './expand-panel/expand-panel';
 // export {FieldRangeNumber} from './field-range-number/field-range-number';
-// export {HeaderModule} from './header-module/header-module';
+
 // export {InputRangeNumber} from './input-range-number/input-range-number';
 // export {MainMenu} from './main-menu/main-menu';
 // export {LoadingPanel} from './loading-panel/loading-panel';

@@ -1,1 +1,1 @@
-export {TestData} from './test-data'
+export { TestDataService } from './test-data.service';
