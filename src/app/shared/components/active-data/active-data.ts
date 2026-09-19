@@ -13,6 +13,9 @@ export class ActiveData {
 
   private testDataService = inject(TestDataService);
 
+  title = computed(() => this.selectedData() ?? '');
   data = computed(() => this.testDataService.getData(this.selectedData()));
-  columns = computed(() => this.testDataService.getColumns(this.selectedData()));
+  columns = computed(() => {
+    return this.testDataService.getColumns(this.selectedData()) ?? undefined;
+  });
 }

@@ -1,0 +1,56 @@
+::ng-deep #tableData .p-datatable-header {
+  padding: 8px 0 !important;
+}
+
+.search-container {
+  width: 70px;
+  transition: width 0.3s ease;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+
+  /*При фокусе внутри контейнера*/
+
+  &:focus-within,
+  &:has(.search-input:not(:placeholder-shown)) {
+    width: 250px;
+  }
+
+  .search-input {
+    width: 100%;
+    min-width: 0;
+    flex: 1 1 auto;
+    background: transparent;
+    outline: none;
+
+    &:focus,
+    &:not(:placeholder-shown) {
+      opacity: 1;
+    }
+  }
+
+  /*Скрываем placeholder когда не активно*/
+
+  &:not(:focus-within) .search-input:placeholder-shown {
+    &::placeholder {
+      color: transparent;
+    }
+  }
+}
+
+/*::ng-deep #activeTable .p-component.p-inputtext {*/
+/*  font-size: 14px;*/
+/*  width: 100%;*/
+/*}*/
+
+.clear-icon {
+  width: 1.5rem;
+  font-size: 1rem;
+  cursor: pointer;
+  color: #6b7280;
+  transition: color 0.2s ease-in-out;
+
+  &:hover {
+    color: #374151;
+  }
+}

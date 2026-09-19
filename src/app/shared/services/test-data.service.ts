@@ -95,7 +95,7 @@ export class TestDataService {
    * @param value - заданное значение данных
    */
   getData(value: string | null) {
-    if (value === null) return [];
+    if (value === null) return null;
 
     return value === 'Сотрудники' ? this.staffers : this.cars;
   }
@@ -104,9 +104,9 @@ export class TestDataService {
    * Формирование списка столбцов по исходным данных
    * @param selectedData
    */
-  getColumns(selectedData: string | null): IColumn[] {
+  getColumns(selectedData: string | null): IColumn[] | null {
     const data = this.getData(selectedData);
-    if (data.length === 0) return [];
+    if (!data || data.length === 0) return null;
 
     const firstItem = data[0];
     return Object.entries(firstItem).map(([field, value]): IColumn => ({

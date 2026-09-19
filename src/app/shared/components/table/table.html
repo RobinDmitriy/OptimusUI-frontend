@@ -1,7 +1,113 @@
-<div class="card">
+<p-card class="m-4"
+        [hidden]="!showPanel()"
+>
   <p-table [columns]="columns()"
            [value]="value"
+           id="tableData"
   >
+    @if (showToolbar()) {
+      <ng-template #caption>
+        <!--                     [ngClass]="visibleComparePeriods() ? '!pt-1 !pb-0' : '!pt-1 !pb-1'"-->
+        <p-toolbar class="border-none! p-0!"
+        >
+          <ng-template #start>
+            <span class="text-xl font-bold">{{ title() }}</span>
+          </ng-template>
+
+          <ng-template #end>
+
+            @if (showContentFilter()) {
+              <p-iconfield class="search-container pr-2"
+                           iconPosition="left"
+              >
+                <p-inputicon>
+                  <i class="pi pi-search"></i>
+                </p-inputicon>
+                <input (input)="setFilterSearch($event)"
+                       [ngModel]="searchValue"
+                       class="search-input"
+                       pInputText
+                       placeholder="Поиск..."
+                       type="text"
+                />
+                @if (searchValue && searchValue.length > 0) {
+                  <p-inputicon (click)="clearSearch()"
+                               class="clear-icon"
+                               title="Очистить поиск"
+                  >
+                    <i class="pi pi-times"></i>
+                  </p-inputicon>
+                }
+              </p-iconfield>
+            }
+            <!--            @if (isShowClearAllFilterButton()) {-->
+            <!--              <p-button (click)="clearAllFilters()"-->
+            <!--                        [disabled]="!filteredData()"-->
+            <!--                        class="pr-1"-->
+            <!--                        icon="pi pi-filter-slash"-->
+            <!--                        text-->
+            <!--                        rounded-->
+            <!--                        title="Сбросить фильтры"-->
+            <!--              />-->
+            <!--            }-->
+
+            <!--            @if (isShowReloadDataButton()) {-->
+            <!--              <p-button (click)="onClickButtonUpdateData()"-->
+            <!--                        class="pr-1"-->
+            <!--                        icon="pi pi-sync"-->
+            <!--                        rounded-->
+            <!--                        text-->
+            <!--                        title="Обновить данные"-->
+            <!--              />-->
+            <!--            }-->
+
+            <!--            @if (isShowChartButton()) {-->
+            <!--              @if (!editMode()) {-->
+            <!--                <p-button (onClick)="showChartView()"-->
+            <!--                          class="pr-1"-->
+            <!--                          text-->
+            <!--                          rounded-->
+            <!--                          icon="pi pi-chart-line"-->
+            <!--                          title="График"-->
+            <!--                />-->
+            <!--              }-->
+            <!--            }-->
+            <!--            @if (isShowExportButton()) {-->
+            <!--              <p-button (click)="dt.exportCSV()"-->
+            <!--                        class="pr-1"-->
+            <!--                        icon="pi pi-file-export"-->
+            <!--                        text-->
+            <!--                        rounded-->
+            <!--                        title="Экспорт в CSV"-->
+            <!--              />-->
+            <!--            }-->
+            <!--              @if (isShowColumnSelectorButton()) {-->
+            <!--                <p-button #btn-->
+            <!--                          (click)="columnSelect.show($event)"-->
+            <!--                          icon="pi pi-list-check"-->
+            <!--                          text-->
+            <!--                          rounded-->
+            <!--                          title="Выбор столбцов"-->
+            <!--                />-->
+            <!--                <p-popover #columnSelect>-->
+            <!--                  <app-column-selector-list (columnsChange)="visibleColumns.set($event); columnSelect.hide()"-->
+            <!--                                            [tableColumns]="tableColumns()"-->
+            <!--                                            [columns]="columns()"-->
+            <!--                  >-->
+            <!--                  </app-column-selector-list>-->
+            <!--                </p-popover>-->
+            <!--              }-->
+            <!--            (click)=""-->
+            <p-button icon="pi pi-cog"
+                      text
+                      rounded
+                      title="Настройки"
+            />
+          </ng-template>
+        </p-toolbar>
+      </ng-template>
+    }
+
     <ng-template #header let-columns>
       <tr>
         @for (col of columns; track col.field) {
@@ -26,4 +132,4 @@
       </tr>
     </ng-template>
   </p-table>
-</div>
+</p-card>
