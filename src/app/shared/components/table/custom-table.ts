@@ -11,34 +11,14 @@ import { Button } from '@openng/optimus-ui/button';
 import { ContextMenu } from '@openng/optimus-ui/contextmenu';
 import { MenuItem } from '@openng/optimus-ui/api';
 import { TableService } from '../../services';
+import { IColumn, ISortMeta } from '../../constants';
+import { OverlayBadge } from '@openng/optimus-ui/overlaybadge';
 
-export interface IColumn {
-  field: string;
-  caption?: string;
-  optionLabel?: string;
-  optionValue?: string;
-  type:
-    | 'string'
-    | 'number'
-    | 'date'
-    | 'boolean'
-    | 'object'
-    | 'object[]'
-    | 'datetime'
-    | 'group'
-    | 'color';
-  isLocked?: boolean;
-  alignFrozen?: string;
-  // options?: ILookup[];
-  info?: string;
-  // colspan?: number;
-  width?: number | string;
-  // alignment?: HorizontalAlignment;
-  format?: string;
-  // isRequired?: boolean;
-  isVisible?: boolean;
-  editable?: boolean;
-  // allowFiltering?: boolean;
+interface IFetchOptions {
+  first?: number;
+  rows?: number;
+  filters?: Record<string, any>;
+  globalFilter?: string | null;
 }
 
 @Component({
@@ -53,6 +33,7 @@ export interface IColumn {
     InputText,
     Button,
     ContextMenu,
+    OverlayBadge,
   ],
   selector: 'app-custom-table',
   styleUrl: './custom-table.css',
@@ -76,8 +57,8 @@ export class CustomTable {
   searchValue?: string;
   totalRecords = signal(0);
   loading = signal(false);
-  sortField = signal<string | string[] | null | undefined>(undefined);
-  sortOrder =  signal<1 | -1 | 0 | undefined>(undefined);
+
+  multiSortMeta = signal<ISortMeta[]>([]);
 
   showPanel = computed(() => this.showPanelInput() && this.data().length > 0);
   isSorted = computed(() => this.isSortedInput());
@@ -89,6 +70,75 @@ export class CustomTable {
   }
 
   /**
+   * Направление сортировки для заданного столбца (0 — не участвует).
+   * @param field - код столбца таблицы
+   */
+  sortOrderFor = (field: string): 1 | -1 | 0 => {
+    const meta = this.multiSortMeta().find((m) => m.field === field);
+    return meta?.order ?? 0;
+  };
+
+  /**
+   * Индекс столбца в мультисортировке (для отображения приоритета).
+   * -1 — не участвует.
+   */
+  sortIndexFor = (field: string): number => {
+    return this.multiSortMeta().findIndex((m) => m.field === field);
+  };
+
+  /**
+   * Обработка события при нажатии на заголовок таблицы
+   * @param column - данные заголовка
+   * @param event - данные события мыши
+   */
+  onHeaderClick(column: IColumn, event: MouseEvent) {
+    if (!this.isSorted()) return;
+
+    const currentMeta = [...this.multiSortMeta()];
+    const existingIndex = currentMeta.findIndex((m) => m.field === column.field);
+
+    if (event.ctrlKey) {
+      // Shift + клик — мультисортировка
+      if (existingIndex === -1) {
+        currentMeta.push({ field: column.field, order: 1 });
+      } else {
+        // Цикл для существующего: 1 → -1 → удалить
+        const currentOrder = currentMeta[existingIndex].order;
+        if (currentOrder === 1) {
+          currentMeta[existingIndex].order = -1;
+        } else {
+          currentMeta.splice(existingIndex, 1);
+        }
+      }
+    } else {
+      // Обычный клик — сбрасываем всё, оставляем только этот столбец
+      if (existingIndex !== -1 && currentMeta.length === 1) {
+        // Клик по единственному столбцу — цикл 1 → -1 → 0
+        const currentOrder = currentMeta[existingIndex].order;
+        if (currentOrder === 1) {
+          currentMeta[0] = { field: column.field, order: -1 };
+        } else {
+          currentMeta.length = 0; // сброс
+        }
+      } else {
+        // Новый столбец или клик по одному из многих — заменяем всё
+        currentMeta.length = 0;
+        currentMeta.push({ field: column.field, order: 1 });
+      }
+    }
+
+    this.multiSortMeta.set(currentMeta);
+
+    // Сброс на первую страницу
+    this.fetch({
+      first: 0,
+      rows: this.dt?.rows ?? 10,
+      filters: this.dt?.filters as Record<string, any>,
+      globalFilter: this.searchValue ?? null,
+    });
+  }
+
+  /**
    * Загрузка (обновление) данных с сервера
    * @param event -данные события для обновления данных
    */
@@ -96,47 +146,12 @@ export class CustomTable {
     console.log('loadData event = ', event);
     if (!event) return;
 
-    const clickedField = Array.isArray(event.sortField)
-      ? event.sortField[0] : (event.sortField ?? undefined);
-
-    let field = this.sortField();
-    let order = this.sortOrder();
-
-    if (clickedField !== field) {
-      field = clickedField;
-      order = clickedField ? 1 : 0;
-    } else {
-      order = order === 0 ? 1 : order === 1 ? -1 : 0;
-      if (order === 0) field = undefined;
-    }
-
-    this.sortField.set(field);
-    this.sortOrder.set(order);
-
-    this.loading.set(true);
-
-    this.tableService
-      .getData(this.data(), {
-        sortField: field,
-        sortOrder: order,
-        filters: event.filters as Record<string, any>,
-        first: event.first,
-        rows: event.rows,
-        globalFilter: event.globalFilter,
-      })
-      .subscribe((res) => {
-        console.log('res = ', res);
-        this.value = res.data;
-        this.totalRecords.set(res.total);
-        this.loading.set(false);
-      });
-  }
-
-  /**
-   * Обновление данных при инициализации сортировки из контекстного меню
-   */
-  updateValue() {
-    console.log('updateValue this.dt.TableLazyLoadEvent =  ', this.dt);
+    this.fetch({
+      first: event.first ?? 0,
+      rows: event.rows ?? 10,
+      filters: event.filters as Record<string, any>,
+      globalFilter: event.globalFilter as string | null,
+    });
   }
 
   /**
@@ -145,7 +160,7 @@ export class CustomTable {
    */
   setFilterSearch(event: any) {
     this.searchValue = event.target.value;
-    // this.applyCustomGlobalFilter();
+    this.reloadFromFirstPage();
   }
 
   /**
@@ -167,34 +182,95 @@ export class CustomTable {
    * @param column - данные столбца таблицы
    */
   getSortMenu(column: IColumn): MenuItem[] {
+    const order = this.sortOrderFor(column.field);
+    const index = this.sortIndexFor(column.field);
+
     return [
       {
         label: 'Сортировать по возрастанию',
         icon: 'pi pi-sort-amount-up-alt',
-        disabled: this.dt.sortField === column.field && this.dt.sortOrder === 1,
-        command: () => this.updateValue(),
+        disabled: order === 1,
+        command: () => this.setSort(column.field, 1),
       },
       {
-        disabled: this.dt.sortField === column.field && this.dt.sortOrder === -1,
         label: 'Сортировать по убыванию',
         icon: 'pi pi-sort-amount-down',
-        // command: () => this.setSortOptions(column.field, -1),
+        disabled: order === -1,
+        command: () => this.setSort(column.field, -1),
       },
       {
-        // disabled: this.sortOptions().order === 0 || this.sortOptions().field !== column.field,
+        label: 'Добавить к сортировке (по возрастанию)',
+        icon: 'pi pi-plus',
+        disabled: index !== -1,
+        command: () => this.addToSort(column.field, 1),
+      },
+      {
+        label: 'Убрать из сортировки',
+        icon: 'pi pi-minus',
+        disabled: index === -1,
+        command: () => this.removeFromSort(column.field),
+      },
+      {
+        separator: true,
+      },
+      {
         label: 'Сбросить сортировку',
         icon: 'pi pi-sort-alt-slash',
-        // command: () => this.setSortOptions(column.field, 0),
+        disabled: this.multiSortMeta().length === 0,
+        command: () => this.setSort(undefined, 0),
       },
-      // {
-      //   separator: true
-      // },
-      // {
-      //   label: column.isLocked ? 'Разблокировать' : 'Заблокировать',
-      //   icon: column.isLocked ? 'pi pi-lock-open' : 'pi pi-lock',
-      //   command: () => this.setLockColumn(column)
-      // }
     ];
+  }
+
+  /**
+   * Установка данных для сортировки
+   * @param field - поле фильтрации
+   * @param order - порядок фильтрации для поля
+   */
+  setSort(field: string | undefined, order: 1 | -1 | 0) {
+    if (order === 0 || !field) {
+      this.multiSortMeta.set([]);
+    } else {
+      this.multiSortMeta.set([{ field, order }]);
+    }
+    this.reloadFromFirstPage();
+  }
+
+  /**
+   * Добавление поля в настройки сортировки
+   * @param field - поле фильтрации
+   * @param order - порядок фильтрации для поля
+   */
+  addToSort(field: string, order: 1 | -1) {
+    const current = [...this.multiSortMeta()];
+    if (!current.find((m) => m.field === field)) {
+      current.push({ field, order });
+      this.multiSortMeta.set(current);
+      this.reloadFromFirstPage();
+    }
+  }
+
+  /**
+   * Удаление поля из настроек сортировки
+   * @param field - поле фильтрации
+   */
+  removeFromSort(field: string) {
+    const current = this.multiSortMeta().filter((m) => m.field !== field);
+    this.multiSortMeta.set(current);
+    this.reloadFromFirstPage();
+  }
+
+  /**
+   * Перезагрузка данных таблицы с установкой первой страницы в 0
+   * @private
+   */
+  private reloadFromFirstPage() {
+    this.fetch({
+      first: 0,
+      rows: this.dt?.rows ?? 10,
+      filters: this.dt?.filters as Record<string, any>,
+      globalFilter: this.searchValue ?? null,
+    });
   }
 
   /**
@@ -202,7 +278,30 @@ export class CustomTable {
    */
   clearSearch() {
     this.searchValue = '';
-    // this.applyCustomGlobalFilter();
+    this.reloadFromFirstPage();
+  }
+
+  /**
+   * Единая точка запроса данных к сервису.
+   * Сортировка берётся из сигналов, остальное — из параметров.
+   * @param options - параметры запроса
+   */
+  private fetch(options: IFetchOptions) {
+    this.loading.set(true);
+
+    this.tableService
+      .getData(this.data(), {
+        multiSortMeta: this.multiSortMeta(),
+        filters: options.filters ?? {},
+        first: options.first ?? 0,
+        rows: options.rows ?? 10,
+        globalFilter: options.globalFilter ?? null,
+      })
+      .subscribe((res) => {
+        this.value = res.data;
+        this.totalRecords.set(res.total);
+        this.loading.set(false);
+      });
   }
 
   /**

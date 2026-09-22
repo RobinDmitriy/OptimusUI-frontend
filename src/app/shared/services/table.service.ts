@@ -1,19 +1,6 @@
 import { Service } from '@angular/core';
 import { delay, Observable, of } from 'rxjs';
-
-export interface ILazyLoadParams {
-  sortField?: string | string[] | null;
-  sortOrder?: 1 | -1 | 0;
-  filters?: Record<string, any>;
-  first?: number;
-  rows?: number | null;
-  globalFilter?: string | string[] | null;
-}
-
-export interface ILazyLoadResult<T> {
-  data: T[];
-  total: number;
-}
+import { ILazyLoadParams, ILazyLoadResult, ISortMeta } from '../constants';
 
 @Service()
 export class TableService {
@@ -29,7 +16,6 @@ export class TableService {
     if (!source || source.length === 0) {
       return of({ data: [], total: 0 }).pipe(delay(300));
     }
-    console.log('getData params = ', params);
 
     let result = [...source];
 
@@ -52,10 +38,9 @@ export class TableService {
       result = this.applyFilters(result, params.filters);
     }
 
-    // 3. Сортировка (single или multiple)
-    const sortFields = this.normalizeSortFields(params.sortField);
-    if (sortFields.length && params.sortOrder) {
-      result = this.applySort(result, sortFields, params.sortOrder);
+    // 3. Мультисортировка
+    if (params.multiSortMeta?.length) {
+      result = this.applyMultiSort(result, params.multiSortMeta);
     }
 
     // 4. Общее количество до пагинации
@@ -66,7 +51,6 @@ export class TableService {
     const rows = params.rows ?? total;
     result = result.slice(first, first + rows);
 
-    // return of({ data: result, total }).pipe(delay(300));
     return of({ data: result, total });
   }
 
@@ -81,29 +65,15 @@ export class TableService {
   }
 
   /**
-   * Приведение sortField к массиву (поддержка multi-sort).
-   * @param value - значения поля для сортировки
+   * Мультисортировка по массиву критериев.
+   * Критерии применяются последовательно: если по первому поля значения равны,
+   * сравниваются по второму, и так далее. Направление у каждого критерия своё.
    */
-  private normalizeSortFields(value: string | string[] | null | undefined): string[] {
-    if (value == null) return [];
-    const arr = Array.isArray(value) ? value : [value];
-    return arr.filter((v) => v != null && v !== '');
-  }
-
-  /**
-   * Сортировка по одному или нескольким полям.
-   * Для multi-sort все поля сортируются в одном направлении (как делает Optimus
-   * при клике по заголовку без мета-информации).
-   */
-  private applySort<T extends Record<string, any>>(
-    data: T[],
-    fields: string[],
-    order: 1 | -1 | 0,
-  ): T[] {
-    if (order === 0) return data;
+  private applyMultiSort<T extends Record<string, any>>(data: T[], meta: ISortMeta[]): T[] {
+    if (!meta.length) return data;
 
     return [...data].sort((a, b) => {
-      for (const field of fields) {
+      for (const { field, order } of meta) {
         const va = this.normalize(a[field]);
         const vb = this.normalize(b[field]);
 

@@ -119,18 +119,34 @@
     <ng-template #header let-columns>
       <tr>
         @for (col of columns; track col.field) {
-          <th [pSortableColumn]="col.field"
-              [pSortableColumnDisabled]="!isSorted()"
+          <th (click)="onHeaderClick(col, $event)"
               (contextmenu)="onContextMenu($event, col)"
-              [class.p-datatable-column-sorted]="sortField() === col.field && sortOrder() !== 0"
+              [class.p-datatable-column-sorted]="sortOrderFor(col.field) !== 0"
+              [style.cursor]="isSorted() ? 'pointer' : 'default'"
+              [style.user-select]="'none'"
+              [style.padding-right]="multiSortMeta().length > 1 ? '24px' : '0.75rem'"
           >
-            <div class="flex flex-row justify-between">
+            <div class="flex flex-row items-center justify-between">
               {{ col.caption }}
-              @if (sortField() === col.field && sortOrder() !== 0) {
-                <i class="pi"
-                   [class.pi-sort-amount-up-alt]="sortOrder() === 1"
-                   [class.pi-sort-amount-down]="sortOrder() === -1"
-                ></i>
+
+              @if (sortOrderFor(col.field) !== 0) {
+                @if (sortIndexFor(col.field) >= 0 && multiSortMeta().length > 1) {
+                  <p-overlay-badge [value]="sortIndexFor(col.field) + 1"
+                                   [hidden]="!(sortIndexFor(col.field) >= 0 && multiSortMeta().length > 1)"
+                                   badgeSize="small"
+                                   [style]="{'top': '2px', 'right': '-8px'}"
+                  >
+                    <i class="pi"
+                       [class.pi-sort-amount-up-alt]="sortOrderFor(col.field) === 1"
+                       [class.pi-sort-amount-down]="sortOrderFor(col.field) === -1"
+                    ></i>
+                  </p-overlay-badge>
+                } @else {
+                  <i class="pi"
+                     [class.pi-sort-amount-up-alt]="sortOrderFor(col.field) === 1"
+                     [class.pi-sort-amount-down]="sortOrderFor(col.field) === -1"
+                  ></i>
+                }
               }
             </div>
           </th>

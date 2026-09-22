@@ -1,5 +1,5 @@
 import { Service } from '@angular/core';
-import { IColumn } from '../components/table/custom-table';
+import { IColumn } from '../constants';
 
 export interface Staffer {
   id: number;
