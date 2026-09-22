@@ -312,6 +312,7 @@ export class CustomTable {
     effect(() => {
       console.log('effect data = ', this.data());
       this.value = this.data();
+      this.reloadFromFirstPage();
     });
 
     effect(() => console.log('effect columns = ', this.columns()));
