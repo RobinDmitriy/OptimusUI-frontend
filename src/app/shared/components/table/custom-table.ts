@@ -85,7 +85,7 @@ export class CustomTable {
   private tableService = inject(TableService);
 
   constructor() {
-    this.updateValue();
+    this.initValue();
   }
 
   /**
@@ -93,6 +93,7 @@ export class CustomTable {
    * @param event -данные события для обновления данных
    */
   loadData(event: TableLazyLoadEvent | null) {
+    console.log('loadData event = ', event);
     if (!event) return;
 
     const clickedField = Array.isArray(event.sortField)
@@ -132,6 +133,13 @@ export class CustomTable {
   }
 
   /**
+   * Обновление данных при инициализации сортировки из контекстного меню
+   */
+  updateValue() {
+    console.log('updateValue this.dt.TableLazyLoadEvent =  ', this.dt);
+  }
+
+  /**
    * Установка фильтрации данных по введённому значению в поле поиска
    * @param event - данные события ввода данных
    */
@@ -164,7 +172,7 @@ export class CustomTable {
         label: 'Сортировать по возрастанию',
         icon: 'pi pi-sort-amount-up-alt',
         disabled: this.dt.sortField === column.field && this.dt.sortOrder === 1,
-        // command: () => this.setSortOptions(column.field, 1),
+        command: () => this.updateValue(),
       },
       {
         disabled: this.dt.sortField === column.field && this.dt.sortOrder === -1,
@@ -201,7 +209,7 @@ export class CustomTable {
    * Обновление данных таблицы
    * @private
    */
-  private updateValue() {
+  private initValue() {
     effect(() => {
       console.log('effect data = ', this.data());
       this.value = this.data();
