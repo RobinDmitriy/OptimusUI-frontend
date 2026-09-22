@@ -118,7 +118,7 @@
                (focus)="onInputFocus()"
                (input)="onInputText($event)"
                [ngModel]="value()"
-               fluid
+               [fluid]="true"
                id="inputText"
                pInputText
                type="text"
@@ -203,7 +203,7 @@
                          [showSeconds]="true"
                          [showTime]="true"
                          appendTo="body"
-                         fluid
+                         [fluid]="true"
                          hourFormat="24"
                          iconDisplay="input"
                          id="inputDatetime"
@@ -225,7 +225,7 @@
         }
       </div>
       @if (showRangeComponent()) {
-        <div #rangeContainer class="absolute top-[-1px] left-0 z-50 w-full">
+        <div #rangeContainer class="absolute -top-px left-0 z-50 w-full">
           <app-input-range (rangeValue)="updateRangeValue($event, false)"
                            [inputText]="rangeValue()"
                            [isNumber]="false"
