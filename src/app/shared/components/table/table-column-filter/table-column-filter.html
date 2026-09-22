@@ -1,0 +1,280 @@
+@switch (column().type) {
+  @case ('color') {
+    <p-select (onChange)="onColorChange($event.value)"
+              [ngModel]="value()"
+              [options]="getColorOptions"
+              [panelStyle]="{ 'width': '200px'}"
+              scrollHeight="220px"
+              appendTo="body"
+              class="text-sm font-normal w-full"
+              id="selectColor"
+              optionLabel="name"
+              optionValue="value"
+              panelStyleClass="text-sm"
+    >
+      <ng-template #selectedItem let-selectedOption>
+        @if (!selectedOption.value) {
+          <div>{{ selectedOption.name }}</div>
+        } @else {
+          <div class="flex items-left justify-center gap-2">
+            <app-color-view [color]="selectedOption.value" />
+            <div>{{ selectedOption.name }}</div>
+          </div>
+        }
+      </ng-template>
+      <ng-template #item let-row>
+        <div class="flex items-center gap-2">
+          <app-color-view [color]="row.value" />
+          <div>{{ row.name }}</div>
+        </div>
+      </ng-template>
+    </p-select>
+  }
+  @case ('object') {
+    <p-select (onChange)="onValueChange($event.value)"
+              [ngModel]="value()"
+              [options]="getOptions"
+              [panelStyle]="{ 'width': '200px' }"
+              appendTo="body"
+              class="text-sm font-normal w-full"
+              id="selectObject"
+              optionLabel="name"
+              optionValue="value"
+              panelStyleClass="text-sm"
+    >
+    </p-select>
+  }
+  @case ('object[]') {
+    <p-select (onChange)="onValueChange($event.value)"
+              [ngModel]="value()"
+              [options]="getOptions"
+              [panelStyle]="{ 'width': '200px' }"
+              size="small"
+              appendTo="body"
+              id="selectObject"
+              optionLabel="name"
+              optionValue="value"
+    >
+    </p-select>
+  }
+  @case ('number') {
+    <div class="relative">
+      <div [class.active]="isInputFocused()"
+           class="filter-with-menu"
+      >
+        <app-custom-icon (mouseenter)="onButtonEnter($event)"
+                         (mouseleave)="onButtonLeave()"
+                         [name]="selectedRuleFilter.icon!"
+                         [ngClass]="{ 'filter-button': true, 'fa-lg': true }"
+        >
+        </app-custom-icon>
+        @if (selectedRuleFilter.id === 'between') {
+          <input (click)="onClickInput($event)"
+                 [ngModel]="rangeValue()"
+                 id="inputRange"
+                 pInputText
+                 pattern="[0-9]+-[0-9]+"
+                 type="text"
+          />
+        } @else {
+          <p-input-number #inputNumber
+                          (onBlur)="onInputBlur()"
+                          (onFocus)="onInputFocus()"
+                          (onInput)="onInputValue($event.value)"
+                          [ngModel]="value()"
+                          [useGrouping]="false"
+                          class="filter-input"
+                          id="inputNumber"
+                          inputId="withoutgrouping"
+                          mode="decimal"
+          ></p-input-number>
+        }
+      </div>
+
+      @if (showRangeComponent()) {
+        <div #rangeContainer class="absolute -top-px left-0 z-50 w-full">
+          <app-input-range (rangeValue)="updateRangeValue($event)"
+                           [inputText]="rangeValue()"
+          ></app-input-range>
+        </div>
+      }
+    </div>
+  }
+  @case ('string') {
+    <div class="relative">
+      <div [class.active]="isInputFocused()"
+           class="filter-with-menu"
+      >
+        <app-custom-icon (mouseenter)="onButtonEnter($event)"
+                         (mouseleave)="onButtonLeave()"
+                         [name]="selectedRuleFilter.icon!"
+                         [ngClass]="{ 'filter-button': true, 'fa-lg': true }"
+        >
+        </app-custom-icon>
+
+        <input #inputText
+               (blur)="onInputBlur()"
+               (click)="onClickInput($event)"
+               (focus)="onInputFocus()"
+               (input)="onInputText($event)"
+               [ngModel]="value()"
+               fluid
+               id="inputText"
+               pInputText
+               type="text"
+        />
+      </div>
+    </div>
+  }
+  @case ('date') {
+    <div class="relative">
+      <div [class.active]="isInputFocused()"
+           class="filter-with-menu"
+      >
+        <app-custom-icon (mouseenter)="onButtonEnter($event)"
+                         (mouseleave)="onButtonLeave()"
+                         [name]="selectedRuleFilter.icon!"
+                         [ngClass]="{ 'filter-button': true, 'fa-lg': true }"
+        >
+        </app-custom-icon>
+
+        @if (selectedRuleFilter.id === 'dateBetween') {
+          <input (click)="onClickInput($event)"
+                 [ngModel]="rangeValue()"
+                 [title]="rangeValue()"
+                 id="inputRangeDate"
+                 pInputText
+                 type="text"
+          />
+        } @else {
+          <p-date-picker (onBlur)="onInputBlur()"
+                         (onFocus)="onInputFocus()"
+                         (onSelect)="onInputDatetime($event)"
+                         [ngModel]="value()"
+                         [readonlyInput]="true"
+                         [showIcon]="true"
+                         appendTo="body"
+                         fluid="true"
+                         iconDisplay="input"
+                         id="inputDate"
+                         inputId="calendar"
+                         class="flex-1"
+          >
+          </p-date-picker>
+        }
+      </div>
+      @if (showRangeComponent()) {
+        <div #rangeContainer class="absolute -top-px left-0 z-50 w-full">
+          <app-input-range (rangeValue)="updateRangeValue($event, false)"
+                           [inputText]="rangeValue()"
+                           [isNumber]="false"
+          ></app-input-range>
+        </div>
+      }
+    </div>
+  }
+  @case ('datetime') {
+    <div class="relative">
+      <div [class.active]="isInputFocused()"
+           class="filter-with-menu"
+      >
+        <app-custom-icon (mouseenter)="onButtonEnter($event)"
+                         (mouseleave)="onButtonLeave()"
+                         [name]="selectedRuleFilter.icon!"
+                         [ngClass]="{ 'filter-button': true, 'fa-lg': true }"
+        >
+        </app-custom-icon>
+
+        @if (selectedRuleFilter.id === 'dateBetween') {
+          <input (click)="onClickInput($event)"
+                 [ngModel]="rangeValue()"
+                 [title]="rangeValue()"
+                 id="inputRangeDate"
+                 pInputText
+                 type="text"
+          />
+        } @else {
+          <p-date-picker (onBlur)="onInputBlur()"
+                         (onFocus)="onInputFocus()"
+                         (onSelect)="onInputDatetime($event)"
+                         [ngModel]="value()"
+                         [readonlyInput]="true"
+                         [showIcon]="true"
+                         [showSeconds]="true"
+                         [showTime]="true"
+                         appendTo="body"
+                         fluid
+                         hourFormat="24"
+                         iconDisplay="input"
+                         id="inputDatetime"
+                         inputId="calendar-24h"
+          >
+            <!--            <ng-template #buttonbar let-clearCallback="clearCallback" let-todayCallback="todayCallback">-->
+            <!--              <div class="flex justify-between w-full">-->
+            <!--                <div class="flex gap-2">-->
+            <!--                  <p-button label="Exact" severity="secondary" size="small"/>-->
+            <!--                  <p-button label="Flexible" severity="secondary" size="small"/>-->
+            <!--                </div>-->
+            <!--                <div class="flex gap-2">-->
+            <!--                  <p-button (click)="todayCallback()" label="Today" size="small" variant="outlined"/>-->
+            <!--                  <p-button (click)="clearCallback()" icon="pi pi-times" severity="danger" size="small" variant="text"/>-->
+            <!--                </div>-->
+            <!--              </div>-->
+            <!--            </ng-template>-->
+          </p-date-picker>
+        }
+      </div>
+      @if (showRangeComponent()) {
+        <div #rangeContainer class="absolute top-[-1px] left-0 z-50 w-full">
+          <app-input-range (rangeValue)="updateRangeValue($event, false)"
+                           [inputText]="rangeValue()"
+                           [isNumber]="false"
+                           [formatHour]="'24'"
+          ></app-input-range>
+        </div>
+      }
+    </div>
+  }
+  @case ('boolean') {
+    <div class="relative">
+      <div [class.active]="isInputFocused()"
+           class="filter-with-menu"
+      >
+        <app-custom-icon (mouseenter)="onButtonEnter($event)"
+                         (mouseleave)="onButtonLeave()"
+                         [name]="selectedRuleFilter.icon!"
+                         [ngClass]="{ 'filter-button': true, 'fa-lg': true }"
+        >
+        </app-custom-icon>
+
+        <input #inputBoolean
+               (blur)="onInputBlur()"
+               (click)="onClickInput($event)"
+               (focus)="onInputFocus()"
+               (input)="onInputText($event)"
+               [ngModel]="value()"
+               id="inputBoolean"
+               pInputText
+               type="text"
+        />
+      </div>
+    </div>
+  }
+}
+
+<p-menu #menu
+        [id]="getMenuID"
+        [model]="items"
+        [popup]="true"
+        appendTo="body"
+>
+  <ng-template #item let-item>
+    <div class="flex h-8 items-center cursor-pointer">
+      <app-custom-icon [name]="item.icon!"
+                       [ngClass]="{ 'mr-2': true, 'fa-lg': true }"
+      >
+      </app-custom-icon>
+      <span>{{ item.label }}</span>
+    </div>
+  </ng-template>
+</p-menu>

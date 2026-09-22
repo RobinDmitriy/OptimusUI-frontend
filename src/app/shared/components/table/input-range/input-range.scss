@@ -1,0 +1,19 @@
+::ng-deep #dateBegin .p-inputtext,
+::ng-deep #dateEnd .p-inputtext,
+::ng-deep #inputMin .p-inputtext,
+::ng-deep #inputMax .p-inputtext {
+  border: none;
+  border-bottom: 1px solid #969696;
+  border-radius: 0;
+  background-color: #f1f5f9;
+  padding-bottom: 1px;
+  font-weight: normal;
+  //width: 100%;
+
+  &:focus {
+    border-bottom: 2px solid var(--p-primary-color);
+    padding-bottom: 0;
+    outline: none;
+  }
+}
+

@@ -9,10 +9,11 @@ import { FormsModule } from '@angular/forms';
 import { InputText } from '@openng/optimus-ui/inputtext';
 import { Button } from '@openng/optimus-ui/button';
 import { ContextMenu } from '@openng/optimus-ui/contextmenu';
-import { MenuItem } from '@openng/optimus-ui/api';
+import { FilterMetadata, MenuItem } from '@openng/optimus-ui/api';
 import { TableService } from '../../services';
-import { IColumn, ISortMeta } from '../../constants';
+import { IColumn, IFilterValue, ISortMeta } from '../../constants';
 import { OverlayBadge } from '@openng/optimus-ui/overlaybadge';
+import { TableColumnFilter } from './table-column-filter/table-column-filter';
 
 interface IFetchOptions {
   first?: number;
@@ -34,6 +35,7 @@ interface IFetchOptions {
     Button,
     ContextMenu,
     OverlayBadge,
+    TableColumnFilter,
   ],
   selector: 'app-custom-table',
   styleUrl: './custom-table.css',
@@ -46,22 +48,27 @@ export class CustomTable {
   columns = input<IColumn[] | undefined>(undefined);
   data = input<any[]>([]);
 
+  dataKey = input<string>('id');
   showPanelInput = input<boolean>(true);
   showToolbar = input<boolean>(true);
   title = input<string>('');
   showContentFilter = input<boolean>(true);
   isSortedInput = input<boolean>(true);
   sortMode = input<'single' | 'multiple'>('single');
+  showRowFilters = input<boolean>(true);
+  showClearAllFilterButton = input<boolean>(true);
 
   value: any;
-  searchValue?: string;
+  searchValue = signal<string | null>(null);
   totalRecords = signal(0);
   loading = signal(false);
+  resetFilters = signal<boolean>(false);
 
   multiSortMeta = signal<ISortMeta[]>([]);
 
   showPanel = computed(() => this.showPanelInput() && this.data().length > 0);
   isSorted = computed(() => this.isSortedInput());
+  isNotFilters = computed(() => this.searchValue() === null);
 
   private tableService = inject(TableService);
 
@@ -69,6 +76,9 @@ export class CustomTable {
     this.initValue();
   }
 
+  // ***********************************************************************************************
+  // ******************************* Функции для сортировки данных *********************************
+  // ***********************************************************************************************
   /**
    * Направление сортировки для заданного столбца (0 — не участвует).
    * @param field - код столбца таблицы
@@ -81,6 +91,7 @@ export class CustomTable {
   /**
    * Индекс столбца в мультисортировке (для отображения приоритета).
    * -1 — не участвует.
+   * @param field - код столбца таблицы
    */
   sortIndexFor = (field: string): number => {
     return this.multiSortMeta().findIndex((m) => m.field === field);
@@ -134,23 +145,7 @@ export class CustomTable {
       first: 0,
       rows: this.dt?.rows ?? 10,
       filters: this.dt?.filters as Record<string, any>,
-      globalFilter: this.searchValue ?? null,
-    });
-  }
-
-  /**
-   * Загрузка (обновление) данных с сервера
-   * @param event -данные события для обновления данных
-   */
-  loadData(event: TableLazyLoadEvent | null) {
-    console.log('loadData event = ', event);
-    if (!event) return;
-
-    this.fetch({
-      first: event.first ?? 0,
-      rows: event.rows ?? 10,
-      filters: event.filters as Record<string, any>,
-      globalFilter: event.globalFilter as string | null,
+      globalFilter: this.searchValue() ?? null,
     });
   }
 
@@ -159,7 +154,7 @@ export class CustomTable {
    * @param event - данные события ввода данных
    */
   setFilterSearch(event: any) {
-    this.searchValue = event.target.value;
+    this.searchValue.set(event.target.value);
     this.reloadFromFirstPage();
   }
 
@@ -260,6 +255,94 @@ export class CustomTable {
     this.reloadFromFirstPage();
   }
 
+  // ***********************************************************************************************
+  // ******************************* Функции для сортировки данных *********************************
+  // ***********************************************************************************************
+  /**
+   * Очистка всех фильтров
+   */
+  clearAllFilters() {
+    // if (!this.dt) return;
+    //
+    // this.dt.clear();
+    this.searchValue.set(null);
+    // this.selectedFilterColumn = null;
+    // this.dt.filterGlobal('', 'contains');
+    //
+    // this.resetFilterMaps();
+    //
+    // this.resetFilters.set(true);
+    // this.filteredData.set(null);
+    // this.currentFilterColumn.set(null);
+    // this.activeFilterField.set(null);
+    //
+    // setTimeout(() => this.resetFilters.set(false), 100);
+  }
+
+  /**
+   * Обработка выбранных элементов фильтрации
+   * @param column - данные столбца таблицы
+   * @param filterData - данные, по которым проводиться фильтрация данных таблицы
+   */
+  onFilterChange(column: IColumn, filterData: IFilterValue) {
+    console.log('onFilterChange filterData = ', filterData);
+    let filterValue;
+
+    switch (filterData.matchMode) {
+      case 'objectByOptionValue':
+        (this as any).context = { column };
+        filterValue = filterData.value;
+        break;
+      case 'in':
+        if (filterData.value) {
+          filterValue = Array.isArray(filterData.value) ? filterData.value : [filterData.value];
+        } else {
+          filterValue = filterData.value;
+        }
+        break;
+      case 'between':
+        filterValue = filterData.value; // для between ожидается массив [min, max]
+        break;
+      default:
+        // для equals, lt, gt, lte, gte и т.д. - просто значение
+        filterValue = filterData.value;
+    }
+
+    // Адаптируем фильтр для режима сравнения
+    let filter: FilterMetadata = {
+      value: filterValue,
+      matchMode: filterData.matchMode,
+      operator: 'and',
+    };
+
+    // if (this.comparedMode && column.type !== 'object') {
+    //   filter = this.adaptFilterForComparisonMode(filter);
+    // }
+    console.log('onFilterChange filter = ', filter);
+
+    // this.singleFilterColumn.set(column.field, filter);
+    // this.currentFilterColumn.set(column);
+  }
+
+  // ***********************************************************************************************
+  // ******************************* Функции для обновления данных *********************************
+  // ***********************************************************************************************
+  /**
+   * Загрузка (обновление) данных с сервера
+   * @param event -данные события для обновления данных
+   */
+  loadData(event: TableLazyLoadEvent | null) {
+    console.log('loadData event = ', event);
+    if (!event) return;
+
+    this.fetch({
+      first: event.first ?? 0,
+      rows: event.rows ?? 10,
+      filters: event.filters as Record<string, any>,
+      globalFilter: event.globalFilter as string | null,
+    });
+  }
+
   /**
    * Перезагрузка данных таблицы с установкой первой страницы в 0
    * @private
@@ -269,7 +352,7 @@ export class CustomTable {
       first: 0,
       rows: this.dt?.rows ?? 10,
       filters: this.dt?.filters as Record<string, any>,
-      globalFilter: this.searchValue ?? null,
+      globalFilter: this.searchValue() ?? null,
     });
   }
 
@@ -277,7 +360,7 @@ export class CustomTable {
    * Очистка поля поиска
    */
   clearSearch() {
-    this.searchValue = '';
+    this.searchValue.set(null);
     this.reloadFromFirstPage();
   }
 

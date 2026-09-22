@@ -44,3 +44,15 @@ export interface IColumn {
   editable?: boolean;
   // allowFiltering?: boolean;
 }
+
+export interface IPossibleValue {
+  name: string;
+  value: string | number | Date;
+  selected: boolean;
+  disabled?: boolean;
+}
+
+export interface IFilterValue {
+  value: any;
+  matchMode: string;
+}

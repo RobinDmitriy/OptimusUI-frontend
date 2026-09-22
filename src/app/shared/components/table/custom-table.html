@@ -2,6 +2,7 @@
         [hidden]="!showPanel()"
 >
   <p-table #dt
+           [dataKey]="dataKey()"
            [columns]="columns()"
            [value]="value"
            [sortMode]="sortMode()"
@@ -11,6 +12,7 @@
            [totalRecords]="totalRecords()"
            [loading]="loading()"
            (onLazyLoad)="loadData($event)"
+           [globalFilterFields]="['family']"
            id="tableData"
   >
     @if (showToolbar()) {
@@ -32,13 +34,13 @@
                   <i class="pi pi-search"></i>
                 </p-inputicon>
                 <input (input)="setFilterSearch($event)"
-                       [ngModel]="searchValue"
+                       [ngModel]="searchValue()"
                        class="search-input"
                        pInputText
                        placeholder="Поиск..."
                        type="text"
                 />
-                @if (searchValue && searchValue.length > 0) {
+                @if (searchValue()) {
                   <p-inputicon (click)="clearSearch()"
                                class="clear-icon"
                                title="Очистить поиск"
@@ -48,16 +50,17 @@
                 }
               </p-iconfield>
             }
-            <!--            @if (isShowClearAllFilterButton()) {-->
-            <!--              <p-button (click)="clearAllFilters()"-->
-            <!--                        [disabled]="!filteredData()"-->
-            <!--                        class="pr-1"-->
-            <!--                        icon="pi pi-filter-slash"-->
-            <!--                        text-->
-            <!--                        rounded-->
-            <!--                        title="Сбросить фильтры"-->
-            <!--              />-->
-            <!--            }-->
+            @if (showClearAllFilterButton()) {
+              <p-button (click)="clearAllFilters()"
+                        [disabled]="isNotFilters()"
+                        class="pr-1"
+                        icon="pi pi-filter-slash"
+                        [text]="true"
+                        [rounded]="true"
+                        [severity]="isNotFilters() ? 'secondary' : 'primary'"
+                        title="Сбросить фильтры"
+              />
+            }
 
             <!--            @if (isShowReloadDataButton()) {-->
             <!--              <p-button (click)="onClickButtonUpdateData()"-->
@@ -116,7 +119,9 @@
       </ng-template>
     }
 
+    <!--    Шаблон заголовка таблицы-->
     <ng-template #header let-columns>
+      <!--      Строка с заголовками таблицы-->
       <tr>
         @for (col of columns; track col.field) {
           <th (click)="onHeaderClick(col, $event)"
@@ -152,6 +157,34 @@
           </th>
         }
       </tr>
+      <!--      Строка с фильтрами-->
+      @if (showRowFilters()) {
+        <!--        <tr class="filter-field">-->
+        <tr>
+          <!--            @for (column of visibleColumns(); track column.field) {-->
+          @for (column of columns; track 'vis_' + column.field) {
+            <!--            <th [alignFrozen]="column?.alignFrozen ?? 'left'"-->
+              <!--                [frozen]="column.isLocked!"-->
+              <!--                pFrozenColumn-->
+              <!--            >-->
+            <th class="p-0! bg-(--p-surface-100)!">
+              <p-column-filter [field]="column.field"
+                               [showMenu]="false"
+              >
+                <ng-template #filter let-filterValue>
+                  <!--                  [options]="possibleValueFilters().get(column.field) ?? []"-->
+                  <app-table-column-filter (filterChange)="onFilterChange(column, $event)"
+                                           [column]="column"
+                                           [filterValue]="resetFilters() ? null : filterValue"
+                                           [options]="[]"
+                                           [reset]="resetFilters()"
+                  ></app-table-column-filter>
+                </ng-template>
+              </p-column-filter>
+            </th>
+          }
+        </tr>
+      }
     </ng-template>
 
     <ng-template #body let-rowData let-columns="columns">

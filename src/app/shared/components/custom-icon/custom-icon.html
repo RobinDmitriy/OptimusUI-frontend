@@ -1,0 +1,53 @@
+@if (['contains', 'notContains', 'startsWith', 'endsWith'].includes(name())) {
+  @switch (name()) {
+    @case ('contains') {
+      <svg height="28px"
+           viewBox="0 0 24 24"
+           width="1.5em"
+           xmlns="http://www.w3.org/2000/svg"
+      >
+        <text fill="currentColor" font-family="Arial, sans-serif" font-size="10" x="3" y="16">а</text>
+        <rect fill="currentColor" height="10" rx="1" width="7" x="10" y="7"/>
+        <text fill="#fff" font-family="Arial, sans-serif" font-size="10" x="10.5" y="16">б</text>
+        <text fill="currentColor" font-family="Arial, sans-serif" font-size="10" x="18" y="16">в</text>
+      </svg>
+    }
+    @case ('notContains') {
+      <svg height="28px"
+           viewBox="0 0 24 24"
+           width="1.5em"
+           xmlns="http://www.w3.org/2000/svg"
+      >
+        <text fill="currentColor" font-family="Arial, sans-serif" font-size="10" x="3" y="16">а</text>
+        <text fill="currentColor" font-family="Arial, sans-serif" font-size="10" x="10.5" y="16">б</text>
+        <text fill="currentColor" font-family="Arial, sans-serif" font-size="10" x="18" y="16">в</text>
+      </svg>
+    }
+    @case ('startsWith') {
+      <svg height="28px"
+           viewBox="0 0 24 24"
+           width="1.5em"
+           xmlns="http://www.w3.org/2000/svg">
+        <rect fill="currentColor" height="10" rx="1" width="15" x="2.5" y="7"/>
+        <text fill="#fff" font-family="Arial, sans-serif" font-size="10" x="3" y="16">а</text>
+        <text fill="#fff" font-family="Arial, sans-serif" font-size="10" x="10.5" y="16">б</text>
+        <text fill="currentColor" font-family="Arial, sans-serif" font-size="10" x="18" y="16">в</text>
+      </svg>
+
+    }
+    @case ('endsWith') {
+      <svg height="28px"
+           viewBox="0 0 24 24"
+           width="1.5em"
+           xmlns="http://www.w3.org/2000/svg">
+        <text fill="currentColor" font-family="Arial, sans-serif" font-size="10" x="3" y="16">а</text>
+        <rect fill="currentColor" height="10" rx="1" width="15" x="10" y="7"/>
+        <text fill="#fff" font-family="Arial, sans-serif" font-size="10" x="10.5" y="16">б</text>
+        <text fill="#fff" font-family="Arial, sans-serif" font-size="10" x="17" y="16">в</text>
+      </svg>
+
+    }
+  }
+} @else {
+  <fa-icon [icon]="getIcon(name())"></fa-icon>
+}

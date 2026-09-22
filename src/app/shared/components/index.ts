@@ -1,5 +1,10 @@
-export { CustomTable } from './table/custom-table';
+export { ActiveData } from './active-data/active-data';
+export { CustomIcon } from './custom-icon/custom-icon';
 export { Header } from './header/header';
+export { CustomTable } from './table/custom-table';
+export { ColorView } from './table/color-view/color-view';
+export { InputRange } from './table/input-range/input-range';
+export { TableColumnFilter } from './table/table-column-filter/table-column-filter';
 
 // export {AggregationPeriods} from './aggregation-periods/aggregation-periods';
 // // export * from './components/charts/pie-chart/pie-chart';

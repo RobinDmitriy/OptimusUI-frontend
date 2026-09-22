@@ -1,0 +1,73 @@
+<div (click)="onComponentClick($event)"
+     class="flex flex-col w-full"
+>
+  @if (isNumber()) {
+    <p-input-number [(ngModel)]="minValue"
+                    [pAutoFocus]="true"
+                    [useGrouping]="false"
+                    size="large"
+                    id="inputMin"
+                    mode="decimal"
+                    placeholder="Начало"
+    ></p-input-number>
+    <p-input-number [(ngModel)]="maxValue"
+                    [useGrouping]="false"
+                    id="inputMax"
+                    mode="decimal"
+                    size="large"
+                    placeholder="Конец"
+    ></p-input-number>
+  } @else {
+    @if (formatHour()) {
+      <p-date-picker [(ngModel)]="minValue"
+                     [readonlyInput]="true"
+                     [showIcon]="true"
+                     [showSeconds]="true"
+                     [showTime]="true"
+                     appendTo="body"
+                     fluid="true"
+                     [hourFormat]="formatHour()!"
+                     iconDisplay="input"
+                     id="dateBegin"
+                     inputId="calendar-24h"
+                     placeholder="Начало"
+      >
+      </p-date-picker>
+      <p-date-picker [(ngModel)]="maxValue"
+                     [readonlyInput]="true"
+                     [showIcon]="true"
+                     [showSeconds]="true"
+                     [showTime]="true"
+                     appendTo="body"
+                     fluid="true"
+                     [hourFormat]="formatHour()!"
+                     iconDisplay="input"
+                     id="dateEnd"
+                     inputId="calendar-24h"
+                     placeholder="Конец"
+      >
+      </p-date-picker>
+    } @else {
+      <p-date-picker [(ngModel)]="minValue"
+                     [readonlyInput]="true"
+                     [showIcon]="true"
+                     appendTo="body"
+                     fluid="true"
+                     iconDisplay="input"
+                     id="dateBegin"
+                     placeholder="Начало"
+      >
+      </p-date-picker>
+      <p-date-picker [(ngModel)]="maxValue"
+                     [readonlyInput]="true"
+                     [showIcon]="true"
+                     appendTo="body"
+                     fluid="true"
+                     iconDisplay="input"
+                     id="dateEnd"
+                     placeholder="Конец"
+      >
+      </p-date-picker>
+    }
+  }
+</div>

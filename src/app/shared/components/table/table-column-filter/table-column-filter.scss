@@ -1,0 +1,87 @@
+::ng-deep #selectColor.p-select,
+::ng-deep #selectObject.p-select {
+  border: none;
+  border-radius: 0;
+  background-color: transparent;
+  box-shadow: none;
+
+  //&:focus, &.p-focus {
+  //  border-bottom: 2px solid var(--p-primary-color) !important;
+  //  //box-shadow: none !important;
+  //  //outline: none;
+  //}
+}
+
+//::ng-deep #selectObject.p-select:not(.p-disabled).p-focus {
+//  border-bottom: 2px solid var(--p-primary-color); // подсветка при активации
+//}
+
+::ng-deep #selectObject .p-select-label {
+  padding: 0.25rem 0.5rem !important;
+  text-align: left;
+  font-size: 1rem;
+  color: #969696;
+}
+
+::ng-deep #inputNumber .p-inputtext,
+::ng-deep #inputText.p-inputtext,
+::ng-deep #inputBoolean.p-inputtext,
+::ng-deep #inputDatetime .p-inputtext,
+::ng-deep #inputDate .p-inputtext,
+::ng-deep #inputRange.p-inputtext {
+  border: none;
+  border-radius: 0;
+  background-color: transparent;
+  font-weight: normal;
+  text-align: center;
+  padding-left: 0;
+  padding-right: 37px;
+  font-size: 1rem;
+  color: #969696;
+}
+
+::ng-deep #inputRangeDate.p-inputtext {
+  border: none;
+  border-radius: 0;
+  background-color: transparent;
+  font-weight: normal;
+  text-align: center;
+  padding-left: 0;
+  padding-right: 0;
+  font-size: 1rem;
+  color: #969696;
+}
+
+.filter-with-menu {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  position: relative;
+  box-sizing: border-box;
+
+  &.active {
+    border-bottom: 2px solid var(--p-primary-color); // подсветка при активации
+    margin-bottom: -2px;
+  }
+
+  .filter-button {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    padding: 6px;
+    transition: color 0.2s ease;
+    color: #969696;
+
+    &:hover {
+      background-color: lightgrey;
+    }
+  }
+
+  .filter-input {
+    flex: 1;
+    width: 100%;
+  }
+}
+
+
