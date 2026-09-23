@@ -121,6 +121,42 @@ export const FILTER_TYPE_ITEMS: { [key: string]: MenuItem[] } = {
       icon: 'search',
     },
   ],
+  object: [
+    {
+      id: 'contains',
+      label: 'Содержит',
+      icon: 'contains',
+    },
+    {
+      id: 'notContains',
+      label: 'Не содержит',
+      icon: 'notContains',
+    },
+    {
+      id: 'startsWith',
+      label: 'Начинается с',
+      icon: 'startsWith',
+    },
+    {
+      id: 'endsWith',
+      label: 'Заканчивается на',
+      icon: 'endsWith',
+    },
+    {
+      id: 'equals',
+      label: 'Равно',
+      icon: 'equals',
+    },
+    {
+      id: 'notEquals',
+      label: 'Не равно',
+      icon: 'not-equals',
+    },
+    {
+      label: 'Сбросить',
+      icon: 'search',
+    },
+  ],
   date: [
     {
       id: 'equals',

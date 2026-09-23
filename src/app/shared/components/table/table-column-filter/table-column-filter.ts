@@ -83,7 +83,8 @@ export class TableColumnFilter implements OnInit, OnDestroy {
       if (this.reset()) {
         this.selectedRuleFilter = { label: 'Сбросить', icon: 'search' };
 
-        this.value.set(this.column().type === 'object' ? 0 : null);
+        // this.value.set(this.column().type === 'object' ? 0 : null);
+        this.value.set(null);
         this.rangeValue.set(null);
 
         setTimeout(() => {
@@ -132,13 +133,13 @@ export class TableColumnFilter implements OnInit, OnDestroy {
    * Инициализация формы
    */
   ngOnInit(): void {
-    if (this.column().optionLabel) {
+    // if (this.column().optionLabel) {
       // const valueExpr = this.column().lookup?.valueExpr!;
       // const optionValue = this.column().lookup?.displayExpr!;
       // const all = {[valueExpr]: 0, [optionValue]: '(Все)'};
       // this.options = [all, ...this.column().lookup?.dataSource!];
-      this.value.set(this.filterValue() ?? 0);
-    } else {
+      // this.value.set(this.filterValue() ?? 0);
+    // } else {
       const typeColumn = this.column().type;
       if (typeColumn !== 'color') {
         this.items = FILTER_TYPE_ITEMS[typeColumn].map((item) => ({
@@ -148,7 +149,7 @@ export class TableColumnFilter implements OnInit, OnDestroy {
       }
 
       this.value.set(this.filterValue());
-    }
+    // }
   }
 
   /**

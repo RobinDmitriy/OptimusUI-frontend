@@ -31,18 +31,46 @@
     </p-select>
   }
   @case ('object') {
-    <p-select (onChange)="onValueChange($event.value)"
-              [ngModel]="value()"
-              [options]="getOptions"
-              [panelStyle]="{ 'width': '200px' }"
-              appendTo="body"
-              class="text-sm font-normal w-full"
-              id="selectObject"
-              optionLabel="name"
-              optionValue="value"
-              panelStyleClass="text-sm"
-    >
-    </p-select>
+    <!--    <p-select (onChange)="onValueChange($event.value)"-->
+      <!--              [ngModel]="value()"-->
+      <!--              [options]="getOptions"-->
+      <!--              [panelStyle]="{ 'width': '200px' }"-->
+      <!--              appendTo="body"-->
+      <!--              class="text-sm font-normal w-full"-->
+      <!--              id="selectObject"-->
+      <!--              optionLabel="name"-->
+      <!--              optionValue="value"-->
+      <!--              panelStyleClass="text-sm"-->
+      <!--    >-->
+      <!--    </p-select>-->
+    <div class="relative">
+      <div [class.active]="isInputFocused()"
+           class="filter-with-menu"
+      >
+        <app-custom-icon (mouseenter)="onButtonEnter($event)"
+                         (mouseleave)="onButtonLeave()"
+                         [name]="selectedRuleFilter.icon!"
+                         [ngClass]="{ 'filter-button': true, 'fa-lg': true }"
+        >
+        </app-custom-icon>
+        <p-iconfield iconPosition="right">
+          <input #inputText
+                 (blur)="onInputBlur()"
+                 (click)="onClickInput($event)"
+                 (focus)="onInputFocus()"
+                 (input)="onInputText($event)"
+                 [ngModel]="value()"
+                 [fluid]="true"
+                 id="inputObject"
+                 pInputText
+                 type="text"
+          />
+          <p-inputicon>
+            <span class="text-xs">&#123;...&#125;</span>
+          </p-inputicon>
+        </p-iconfield>
+      </div>
+    </div>
   }
   @case ('object[]') {
     <p-select (onChange)="onValueChange($event.value)"

@@ -1,13 +1,18 @@
 import { Service } from '@angular/core';
 import { IColumn } from '../constants';
 
+export interface IPost {
+  id: number;
+  name: string;
+}
+
 export interface Staffer {
   id: number;
   family: string;
   name: string;
   patronymic?: string;
   birthday: Date;
-  post: string;
+  post: IPost;
   age: number;
 }
 
@@ -47,7 +52,7 @@ export class TestDataService {
       patronymic: 'Иванович',
       birthday: new Date('1980-01-01'),
       age: 46,
-      post: 'Начальник отдела',
+      post: {id: 1, name: 'Начальник отдела'},
     },
     {
       id: 2,
@@ -56,7 +61,7 @@ export class TestDataService {
       patronymic: 'Петрович',
       birthday: new Date('1990-01-01'),
       age: 36,
-      post: 'Ведущий инженер',
+      post: {id: 2, name: 'Ведущий инженер'},
     },
     {
       id: 3,
@@ -65,7 +70,7 @@ export class TestDataService {
       patronymic: 'Андреевич',
       birthday: new Date('2000-01-01'),
       age: 26,
-      post: 'Программист',
+      post: {id: 3, name: 'Программист'},
     },
   ];
 
@@ -109,11 +114,17 @@ export class TestDataService {
     if (!data || data.length === 0) return null;
 
     const firstItem = data[0];
-    return Object.entries(firstItem).map(([field, value]): IColumn => ({
-      field,
-      caption: this.HEADERS[field] ?? field,
-      type: this.getType(value),
-    }));
+
+    return Object.entries(firstItem).map(([field, value]): IColumn => {
+      const type = this.getType(value)
+      return {
+        field,
+        caption: this.HEADERS[field] ?? field,
+        type,
+        optionValue: type === 'object' ? 'id' : undefined,
+        optionLabel: type === 'object' ? Object.keys(value).find(item => item !== 'id') : undefined,
+      };
+    });
   }
 
   /**
@@ -125,6 +136,7 @@ export class TestDataService {
     if (value instanceof Date) return 'date';
     if (typeof value === 'number') return 'number';
     if (typeof value === 'boolean') return 'boolean';
+    if (typeof value === 'object') return 'object';
     return 'string';
   }
 }

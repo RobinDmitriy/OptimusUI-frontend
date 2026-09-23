@@ -1,12 +1,13 @@
 import { FilterMetadata } from '@openng/optimus-ui/api';
 
 export interface IColumnFilterMeta extends FilterMetadata {
-  type?: IColumn['type'];
+  type: IColumn['type'];
 }
 
 export interface ISortMeta {
   field: string;
   order: 1 | -1;
+  type: IColumn['type'];
 }
 
 export interface ILazyLoadParams {

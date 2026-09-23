@@ -118,12 +118,16 @@ export class CustomTable {
     if (event.ctrlKey) {
       // Shift + клик — мультисортировка
       if (existingIndex === -1) {
-        currentMeta.push({ field: column.field, order: 1 });
+        currentMeta.push({ field: column.field, order: 1, type: column.type });
       } else {
         // Цикл для существующего: 1 → -1 → удалить
         const currentOrder = currentMeta[existingIndex].order;
         if (currentOrder === 1) {
-          currentMeta[existingIndex].order = -1;
+          currentMeta[existingIndex] = {
+            ...currentMeta[existingIndex],
+            order: -1,
+            type: column.type,
+          };
         } else {
           currentMeta.splice(existingIndex, 1);
         }
@@ -134,14 +138,14 @@ export class CustomTable {
         // Клик по единственному столбцу — цикл 1 → -1 → 0
         const currentOrder = currentMeta[existingIndex].order;
         if (currentOrder === 1) {
-          currentMeta[0] = { field: column.field, order: -1 };
+          currentMeta[0] = { field: column.field, order: -1, type: column.type };
         } else {
           currentMeta.length = 0; // сброс
         }
       } else {
         // Новый столбец или клик по одному из многих — заменяем всё
         currentMeta.length = 0;
-        currentMeta.push({ field: column.field, order: 1 });
+        currentMeta.push({ field: column.field, order: 1, type: column.type });
       }
     }
 
@@ -192,19 +196,19 @@ export class CustomTable {
         label: 'Сортировать по возрастанию',
         icon: 'pi pi-sort-amount-up-alt',
         disabled: order === 1,
-        command: () => this.setSort(column.field, 1),
+        command: () => this.setSort(column.field, 1, column.type),
       },
       {
         label: 'Сортировать по убыванию',
         icon: 'pi pi-sort-amount-down',
         disabled: order === -1,
-        command: () => this.setSort(column.field, -1),
+        command: () => this.setSort(column.field, -1, column.type),
       },
       {
         label: 'Добавить к сортировке (по возрастанию)',
         icon: 'pi pi-plus',
         disabled: index !== -1,
-        command: () => this.addToSort(column.field, 1),
+        command: () => this.addToSort(column.field, 1, column.type),
       },
       {
         label: 'Убрать из сортировки',
@@ -219,34 +223,36 @@ export class CustomTable {
         label: 'Сбросить сортировку',
         icon: 'pi pi-sort-alt-slash',
         disabled: this.multiSortMeta().length === 0,
-        command: () => this.setSort(undefined, 0),
+        command: () => this.setSort(undefined, 0, column.type),
       },
     ];
   }
 
   /**
    * Установка данных для сортировки
-   * @param field - поле фильтрации
-   * @param order - порядок фильтрации для поля
+   * @param field - поле сортировки
+   * @param order - порядок сортировки для поля
+   * @param type - тип данных столбца
    */
-  setSort(field: string | undefined, order: 1 | -1 | 0) {
+  setSort(field: string | undefined, order: 1 | -1 | 0, type: IColumn['type']) {
     if (order === 0 || !field) {
       this.multiSortMeta.set([]);
     } else {
-      this.multiSortMeta.set([{ field, order }]);
+      this.multiSortMeta.set([{ field, order, type }]);
     }
     this.reloadFromFirstPage();
   }
 
   /**
    * Добавление поля в настройки сортировки
-   * @param field - поле фильтрации
-   * @param order - порядок фильтрации для поля
+   * @param field - поле сортировки
+   * @param order - порядок сортировки для поля
+   * @param type - тип данных столбца
    */
-  addToSort(field: string, order: 1 | -1) {
+  addToSort(field: string, order: 1 | -1, type: IColumn['type']) {
     const current = [...this.multiSortMeta()];
     if (!current.find((m) => m.field === field)) {
-      current.push({ field, order });
+      current.push({ field, order, type });
       this.multiSortMeta.set(current);
       this.reloadFromFirstPage();
     }
@@ -380,7 +386,7 @@ export class CustomTable {
     this.fetch({
       first: 0,
       rows: this.dt?.rows ?? 10,
-      filters: this.dt?.filters as Record<string, any>,
+      filters: this.dt?.filters as Record<string, IColumnFilterMeta>,
       globalFilter: this.searchValue() ?? null,
     });
   }
@@ -429,7 +435,7 @@ export class CustomTable {
   private initValue() {
     effect(() => {
       console.log('effect data = ', this.data());
-      this.value = this.data();
+      // this.value = this.data();
       this.reloadFromFirstPage();
     });
 

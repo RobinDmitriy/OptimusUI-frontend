@@ -26,7 +26,7 @@ export class TableService {
       result = result.filter((row) =>
         globalFilter.some((q) =>
           Object.values(row).some((v) =>
-            String(v ?? '')
+            String(this.getValueForFiltering(v) ?? '')
               .toLowerCase()
               .includes(q),
           ),
@@ -56,6 +56,18 @@ export class TableService {
   }
 
   /**
+   * Получение данных для фильтрации из значения ячейки таблицы
+   * @param valueCell - значение данных в ячейке таблицы
+   */
+  private getValueForFiltering(valueCell: any) {
+    if (typeof valueCell === 'object') {
+      const optionLabel = Object.keys(valueCell).find((item) => item !== 'id') ?? 'id';
+      return valueCell[optionLabel];
+    } else {
+      return valueCell;
+    }
+  }
+  /**
    * Приведение глобального фильтра к массиву строк в нижнем регистре.
    * @param value - значения глобального фильтра
    */
@@ -76,29 +88,109 @@ export class TableService {
     if (!meta.length) return data;
 
     return [...data].sort((a, b) => {
-      for (const { field, order } of meta) {
-        const va = this.normalize(a[field]);
-        const vb = this.normalize(b[field]);
-
-        if (va == null && vb == null) continue;
-        if (va == null) return 1;
-        if (vb == null) return -1;
-
-        let cmp = 0;
-        if (typeof va === 'string' && typeof vb === 'string') {
-          cmp = va.localeCompare(vb, 'ru');
-        } else if (va instanceof Date && vb instanceof Date) {
-          cmp = va.getTime() - vb.getTime();
-        } else if (typeof va === 'number' && typeof vb === 'number') {
-          cmp = va - vb;
-        } else {
-          cmp = String(va).localeCompare(String(vb), 'ru');
-        }
-
+      for (const { field, order, type } of meta) {
+        const cmp = this.compareValues(a[field], b[field], type);
         if (cmp !== 0) return cmp * order;
       }
       return 0;
     });
+  }
+
+  /**
+   * Сравнение двух значений с учётом типа колонки.
+   * Возвращает <0, 0, >0 — совместимо с Array.prototype.sort.
+   * @param a - первое значение
+   * @param b - второе значение
+   * @param type - тип колонки
+   */
+  private compareValues(a: any, b: any, type?: string): number {
+    if (a == null && b == null) return 0;
+    if (a == null) return 1;
+    if (b == null) return -1;
+
+    switch (type) {
+      case 'date':
+        return this.compareDates(a, b, false);
+      case 'datetime':
+        return this.compareDates(a, b, true);
+      case 'number':
+        return this.compareNumbers(a, b);
+      case 'boolean':
+        return Number(Boolean(a)) - Number(Boolean(b));
+      case 'object':
+      case 'object[]':
+        return this.compareObjects(a, b);
+      case 'string':
+        return this.compareStrings(a, b);
+      default:
+        // Без type — «старое» поведение: определяем по значению
+        return this.compareFallback(a, b);
+    }
+  }
+
+  /**
+   * Сравнение строк (локаль ru).
+   */
+  private compareStrings(a: any, b: any): number {
+    return String(a).localeCompare(String(b), 'ru');
+  }
+
+  /**
+   * Сравнение чисел.
+   */
+  private compareNumbers(a: any, b: any): number {
+    const na = Number(a);
+    const nb = Number(b);
+
+    const aNaN = Number.isNaN(na);
+    const bNaN = Number.isNaN(nb);
+
+    if (aNaN && bNaN) return 0;
+    if (aNaN) return 1; // NaN — в конец
+    if (bNaN) return -1;
+    return na - nb;
+  }
+
+  /**
+   * Сравнение дат.
+   * @param withTime - true для datetime (по моменту времени), false для date (по дню)
+   */
+  private compareDates(a: any, b: any, withTime: boolean): number {
+    const da = this.toDate(a, withTime);
+    const db = this.toDate(b, withTime);
+
+    if (!da && !db) return 0;
+    if (!da) return 1;
+    if (!db) return -1;
+
+    return withTime ? da.getTime() - db.getTime() : this.dayDiff(da, db);
+  }
+
+  /**
+   * Сравнение object / object[] по текстовому полю.
+   * Для массива берём первую метку — этого достаточно для стабильной сортировки.
+   */
+  private compareObjects(a: any, b: any): number {
+    const la = this.extractObjectLabels(a, 'name')[0] ?? '';
+    const lb = this.extractObjectLabels(b, 'name')[0] ?? '';
+    return la.localeCompare(lb, 'ru');
+  }
+
+  /**
+   * Fallback для сортировки без type.
+   * Определяет тип значения «на лету» — как делал старый normalize.
+   */
+  private compareFallback(a: any, b: any): number {
+    const va = this.normalize(a);
+    const vb = this.normalize(b);
+
+    if (va == null && vb == null) return 0;
+    if (va == null) return 1;
+    if (vb == null) return -1;
+
+    if (typeof va === 'number' && typeof vb === 'number') return va - vb;
+    if (va instanceof Date && vb instanceof Date) return va.getTime() - vb.getTime();
+    return String(va).localeCompare(String(vb), 'ru');
   }
 
   /**
@@ -184,6 +276,12 @@ export class TableService {
     }
   }
 
+  /**
+   * Проверка удовлетворения выполнения фильтрации
+   * @param cell - значение в ячейке таблицы
+   * @param value - значение, указанное в фильтре
+   * @param matchMode - правило сравнения
+   */
   private matchString(cell: any, value: any, matchMode: string): boolean {
     const c = String(cell).toLowerCase();
     const v = String(value).toLowerCase();
@@ -208,6 +306,12 @@ export class TableService {
     }
   }
 
+  /**
+   * Проверка удовлетворения выполнения фильтрации
+   * @param cell - значение в ячейке таблицы
+   * @param value - значение, указанное в фильтре
+   * @param matchMode - правило сравнения
+   */
   private matchNumber(cell: any, value: any, matchMode: string): boolean {
     const c = Number(cell);
     if (Number.isNaN(c)) return false;
@@ -261,6 +365,12 @@ export class TableService {
     }
   }
 
+  /**
+   * Проверка удовлетворения выполнения фильтрации
+   * @param cell - значение в ячейке таблицы
+   * @param value - значение, указанное в фильтре
+   * @param matchMode - правило сравнения
+   */
   private matchBoolean(cell: any, value: any, matchMode: string): boolean {
     const c = Boolean(cell);
     switch (matchMode) {
@@ -275,6 +385,13 @@ export class TableService {
     }
   }
 
+  /**
+   * Проверка удовлетворения выполнения фильтрации
+   * @param cell - значение в ячейке таблицы
+   * @param value - значение, указанное в фильтре
+   * @param matchMode - правило сравнения
+   * @param withTime - признак учёта времени
+   */
   private matchDate(cell: any, value: any, matchMode: string, withTime: boolean): boolean {
     const c = this.toDate(cell, withTime);
     if (c === null) return false;
@@ -333,19 +450,43 @@ export class TableService {
     }
   }
 
-  private matchObject(cell: any, value: any, matchMode: string): boolean {
-    // Единый формат: массив идентификаторов
-    if (Array.isArray(value)) {
-      const cellId = this.extractId(cell);
-      return value.some((v) => this.compareEq(cellId, this.extractId(v)));
-    }
-    // Объект { поле: значение }
-    if (value && typeof value === 'object') {
-      return Object.keys(value).every((k) => this.compareEq(cell?.[k], value[k]));
-    }
-    return this.compareEq(this.extractId(cell), value);
+  /**
+   * Проверка удовлетворения выполнения фильтрации
+   * @param cell - значение в ячейке таблицы
+   * @param value - значение, указанное в фильтре
+   * @param matchMode - правило сравнения
+   * @param optionLabel - ключ текстового поля объекта
+   */
+  private matchObject(cell: any, value: any, matchMode: string, optionLabel = 'name'): boolean {
+    const labels = this.extractObjectLabels(cell, optionLabel);
+    if (labels.length === 0) return false;
+
+    return labels.some((label) => this.matchString(label, value, matchMode));
   }
 
+  /**
+   * Формирование массива строковых переменных для фильтрации
+   * @param cell - значение в ячейке таблицы
+   * @param optionLabel - ключ текстового поля объекта
+   * @private
+   */
+  private extractObjectLabels(cell: any, optionLabel: string): string[] {
+    if (cell == null) return [];
+    if (Array.isArray(cell)) {
+      return cell.flatMap((item) => this.extractObjectLabels(item, optionLabel));
+    }
+    if (typeof cell === 'object') {
+      const label = cell[optionLabel] ?? cell.name ?? cell.id;
+      return label != null ? [String(label)] : [];
+    }
+    return [String(cell)];
+  }
+
+  /**
+   * Проверка удовлетворения выполнения фильтрации
+   * @param v - значение в ячейке таблицы
+   * @param withTime - признак учёта времени
+   */
   private toDate(v: any, withTime: boolean): Date | null {
     if (v == null) return null;
     if (v instanceof Date) return isNaN(v.getTime()) ? null : v;
@@ -370,36 +511,16 @@ export class TableService {
     return null;
   }
 
+  /**
+   * Расчёт разницы в датах в днях
+   * @param a - значение 1 даты
+   * @param b - значение 2 даты
+   * @private
+   */
   private dayDiff(a: Date, b: Date): number {
     const da = new Date(a.getFullYear(), a.getMonth(), a.getDate()).getTime();
     const db = new Date(b.getFullYear(), b.getMonth(), b.getDate()).getTime();
     return da - db;
-  }
-
-  /** Достаём id из объекта (если пришёл объект) или возвращаем как есть
-   * @param v - значение переменной
-   */
-  private extractId(v: any): any {
-    if (v && typeof v === 'object' && 'id' in v) return (v as any).id;
-    if (v && typeof v === 'object' && 'value' in v) return (v as any).value;
-    return v;
-  }
-
-  /** Проверка на равенство с учётом чисел и дат
-   * @param a - исходное значение данных
-   * @param b - заданное значение фильтра
-   */
-  private compareEq(a: any, b: any): boolean {
-    if (a == null && b == null) return true;
-    if (a == null || b == null) return false;
-
-    if (typeof a === 'number' || typeof b === 'number') {
-      const na = Number(a);
-      const nb = Number(b);
-      if (!isNaN(na) && !isNaN(nb)) return na === nb;
-    }
-
-    return String(a).toLowerCase() === String(b).toLowerCase();
   }
 
   /**
@@ -407,16 +528,33 @@ export class TableService {
    */
   private normalize(value: unknown): string | number | Date | null {
     if (value == null) return null;
-    if (value instanceof Date) return value;
+    if (value instanceof Date) return isNaN(value.getTime()) ? null : value;
     if (typeof value === 'number') return value;
     if (typeof value === 'boolean') return value ? 1 : 0;
-    if (typeof value === 'string') {
-      const asDate = Date.parse(value);
-      if (!isNaN(asDate) && /^\d{4}-\d{2}-\d{2}/.test(value)) {
-        return new Date(value);
-      }
-      return value;
+
+    if (typeof value === 'object') {
+      const label = (value as any).name ?? (value as any).id;
+      return label != null ? String(label) : null;
     }
+
+    if (typeof value === 'string') {
+      const s = value.trim();
+      if (!s) return null;
+
+      if (/^\d{4}-\d{2}-\d{2}/.test(s)) {
+        const t = Date.parse(s);
+        if (!isNaN(t)) return new Date(t);
+      }
+
+      if (/^\d{2}\.\d{2}\.\d{4}/.test(s)) {
+        const hasTime = /\d{2}:\d{2}/.test(s);
+        const format = hasTime ? 'DD.MM.YYYY HH:mm:ss' : 'DD.MM.YYYY';
+        return stringToDate(s, format);
+      }
+
+      return s;
+    }
+
     return String(value);
   }
 }

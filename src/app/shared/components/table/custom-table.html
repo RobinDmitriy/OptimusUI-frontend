@@ -12,7 +12,6 @@
            [totalRecords]="totalRecords()"
            [loading]="loading()"
            (onLazyLoad)="loadData($event)"
-           [globalFilterFields]="['family']"
            [showCurrentPageReport]="true"
            [rowsPerPageOptions]="[15, 20, 25, { showAll: 'Все' }]"
            currentPageReportTemplate="Записи с {first} по {last} (Всего записей: {totalRecords})"
@@ -194,10 +193,19 @@
       <tr>
         @for (col of columns; track col.field) {
           <td>
-            @if (col.type === 'date') {
-              {{ rowData[col.field] | date: 'dd.MM.yyyy' }}
-            } @else {
-              {{ rowData[col.field] }}
+            @switch (col.type) {
+              @case ('date') {
+                {{ rowData[col.field] | date: 'dd.MM.yyyy' }}
+              }
+              @case ('datetime') {
+                {{ rowData[col.field] | date: 'dd.MM.yyyy' }}
+              }
+              @case ('object') {
+                {{ rowData[col.field][col.optionLabel] }}
+              }
+              @default {
+                {{ rowData[col.field] }}
+              }
             }
           </td>
         }
