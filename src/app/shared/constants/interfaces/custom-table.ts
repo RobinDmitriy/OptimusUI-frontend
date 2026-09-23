@@ -1,3 +1,9 @@
+import { FilterMetadata } from '@openng/optimus-ui/api';
+
+export interface IColumnFilterMeta extends FilterMetadata {
+  type?: IColumn['type'];
+}
+
 export interface ISortMeta {
   field: string;
   order: 1 | -1;
@@ -5,7 +11,7 @@ export interface ISortMeta {
 
 export interface ILazyLoadParams {
   multiSortMeta?: ISortMeta[];
-  filters?: Record<string, any>;
+  filters?: Record<string, IColumnFilterMeta>;
   first?: number;
   rows?: number | null;
   globalFilter?: string | string[] | null;

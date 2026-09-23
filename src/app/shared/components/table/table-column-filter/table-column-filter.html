@@ -69,25 +69,34 @@
         >
         </app-custom-icon>
         @if (selectedRuleFilter.id === 'between') {
-          <input (click)="onClickInput($event)"
-                 [ngModel]="rangeValue()"
-                 id="inputRange"
-                 pInputText
-                 pattern="[0-9]+-[0-9]+"
-                 type="text"
-          />
+          <p-iconfield iconPosition="right">
+            <input (click)="onClickInput($event)"
+                   [ngModel]="rangeValue()"
+                   id="inputRange"
+                   pInputText
+                   pattern="[0-9]+-[0-9]+"
+                   type="text"
+            />
+            <p-inputicon>
+              <span class="text-xs">123</span>
+            </p-inputicon>
+          </p-iconfield>
         } @else {
-          <p-input-number #inputNumber
-                          (onBlur)="onInputBlur()"
-                          (onFocus)="onInputFocus()"
-                          (onInput)="onInputValue($event.value)"
-                          [ngModel]="value()"
-                          [useGrouping]="false"
-                          class="filter-input"
-                          id="inputNumber"
-                          inputId="withoutgrouping"
-                          mode="decimal"
-          ></p-input-number>
+          <p-iconfield iconPosition="right">
+            <p-input-number #inputNumber
+                            (onBlur)="onInputBlur()"
+                            (onFocus)="onInputFocus()"
+                            (onInput)="onInputValue($event.value)"
+                            [ngModel]="value()"
+                            [useGrouping]="false"
+                            id="inputNumber"
+                            inputId="withoutgrouping"
+                            mode="decimal"
+            ></p-input-number>
+            <p-inputicon>
+              <span class="text-xs">123</span>
+            </p-inputicon>
+          </p-iconfield>
         }
       </div>
 
@@ -111,18 +120,22 @@
                          [ngClass]="{ 'filter-button': true, 'fa-lg': true }"
         >
         </app-custom-icon>
-
-        <input #inputText
-               (blur)="onInputBlur()"
-               (click)="onClickInput($event)"
-               (focus)="onInputFocus()"
-               (input)="onInputText($event)"
-               [ngModel]="value()"
-               [fluid]="true"
-               id="inputText"
-               pInputText
-               type="text"
-        />
+        <p-iconfield iconPosition="right">
+          <input #inputText
+                 (blur)="onInputBlur()"
+                 (click)="onClickInput($event)"
+                 (focus)="onInputFocus()"
+                 (input)="onInputText($event)"
+                 [ngModel]="value()"
+                 [fluid]="true"
+                 id="inputText"
+                 pInputText
+                 type="text"
+          />
+          <p-inputicon>
+            <span class="text-xs">абс</span>
+          </p-inputicon>
+        </p-iconfield>
       </div>
     </div>
   }
@@ -138,10 +151,11 @@
         >
         </app-custom-icon>
 
-        @if (selectedRuleFilter.id === 'dateBetween') {
+        @if (selectedRuleFilter.id === 'between') {
           <input (click)="onClickInput($event)"
                  [ngModel]="rangeValue()"
                  [title]="rangeValue()"
+                 fluid="true"
                  id="inputRangeDate"
                  pInputText
                  type="text"
@@ -165,7 +179,7 @@
       </div>
       @if (showRangeComponent()) {
         <div #rangeContainer class="absolute -top-px left-0 z-50 w-full">
-          <app-input-range (rangeValue)="updateRangeValue($event, false)"
+          <app-input-range (rangeValue)="updateRangeValue($event, column().type)"
                            [inputText]="rangeValue()"
                            [isNumber]="false"
           ></app-input-range>
@@ -185,7 +199,7 @@
         >
         </app-custom-icon>
 
-        @if (selectedRuleFilter.id === 'dateBetween') {
+        @if (selectedRuleFilter.id === 'between') {
           <input (click)="onClickInput($event)"
                  [ngModel]="rangeValue()"
                  [title]="rangeValue()"
@@ -226,7 +240,7 @@
       </div>
       @if (showRangeComponent()) {
         <div #rangeContainer class="absolute -top-px left-0 z-50 w-full">
-          <app-input-range (rangeValue)="updateRangeValue($event, false)"
+          <app-input-range (rangeValue)="updateRangeValue($event, column().type)"
                            [inputText]="rangeValue()"
                            [isNumber]="false"
                            [formatHour]="'24'"

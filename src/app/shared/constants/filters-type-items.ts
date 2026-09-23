@@ -1,216 +1,215 @@
 import { MenuItem } from '@openng/optimus-ui/api';
 
-
 export const FILTER_TYPE_ITEMS: { [key: string]: MenuItem[] } = {
   'number[]': [
     {
       id: 'equals',
       label: 'Равно',
-      icon: 'equals'
+      icon: 'equals',
     },
     {
       id: 'notEquals',
       label: 'Не равно',
-      icon: 'not-equals'
+      icon: 'not-equals',
     },
     {
       id: 'lt',
       label: 'Меньше',
-      icon: 'less'
+      icon: 'less',
     },
     {
       id: 'gt',
       label: 'Больше',
-      icon: 'greater'
+      icon: 'greater',
     },
     {
       id: 'lte',
       label: 'Меньше или равно',
-      icon: 'less-than-equal'
+      icon: 'less-than-equal',
     },
     {
       id: 'gte',
       label: 'Больше или равно',
-      icon: 'greater-than-equal'
+      icon: 'greater-than-equal',
     },
     {
       id: 'between',
       label: 'В диапазоне',
-      icon: 'between'
+      icon: 'between',
     },
     {
       id: 'startsWith',
       label: 'Сбросить',
-      icon: 'search'
-    }
+      icon: 'search',
+    },
   ],
-  'number': [
+  number: [
     {
       id: 'equals',
       label: 'Равно',
-      icon: 'equals'
+      icon: 'equals',
     },
     {
       id: 'notEquals',
       label: 'Не равно',
-      icon: 'not-equals'
+      icon: 'not-equals',
     },
     {
       id: 'lt',
       label: 'Меньше',
-      icon: 'less'
+      icon: 'less',
     },
     {
       id: 'gt',
       label: 'Больше',
-      icon: 'greater'
+      icon: 'greater',
     },
     {
       id: 'lte',
       label: 'Меньше или равно',
-      icon: 'less-than-equal'
+      icon: 'less-than-equal',
     },
     {
       id: 'gte',
       label: 'Больше или равно',
-      icon: 'greater-than-equal'
+      icon: 'greater-than-equal',
     },
     {
       id: 'between',
       label: 'В диапазоне',
-      icon: 'between'
+      icon: 'between',
     },
     {
       id: 'startsWith',
       label: 'Сбросить',
-      icon: 'search'
-    }
+      icon: 'search',
+    },
   ],
-  'string': [
+  string: [
     {
       id: 'contains',
       label: 'Содержит',
-      icon: 'contains'
+      icon: 'contains',
     },
     {
       id: 'notContains',
       label: 'Не содержит',
-      icon: 'notContains'
+      icon: 'notContains',
     },
     {
       id: 'startsWith',
       label: 'Начинается с',
-      icon: 'startsWith'
+      icon: 'startsWith',
     },
     {
       id: 'endsWith',
       label: 'Заканчивается на',
-      icon: 'endsWith'
+      icon: 'endsWith',
     },
     {
       id: 'equals',
       label: 'Равно',
-      icon: 'equals'
+      icon: 'equals',
     },
     {
       id: 'notEquals',
       label: 'Не равно',
-      icon: 'not-equals'
+      icon: 'not-equals',
     },
     {
       label: 'Сбросить',
       icon: 'search',
-    }
+    },
   ],
-  'date': [
+  date: [
     {
-      id: 'is',
+      id: 'equals',
       label: 'Равно',
-      icon: 'equals'
+      icon: 'equals',
     },
     {
-      id: 'isNot',
+      id: 'notEquals',
       label: 'Не равно',
-      icon: 'not-equals'
+      icon: 'not-equals',
     },
     {
-      id: 'dateBefore',
+      id: 'lt',
       label: 'Меньше',
-      icon: 'less'
+      icon: 'less',
     },
     {
-      id: 'dateAfter',
+      id: 'gt',
       label: 'Больше',
-      icon: 'greater'
+      icon: 'greater',
     },
     {
-      id: 'dateBeforeOrEqual',
+      id: 'lte',
       label: 'Меньше или равно',
-      icon: 'less-than-equal'
+      icon: 'less-than-equal',
     },
     {
-      id: 'dateAfterOrEqual',
+      id: 'gte',
       label: 'Больше или равно',
-      icon: 'greater-than-equal'
+      icon: 'greater-than-equal',
     },
     {
-      id: 'dateBetween',
+      id: 'between',
       label: 'В диапазоне',
-      icon: 'between'
+      icon: 'between',
     },
     {
       id: 'startsWith',
       label: 'Сбросить',
-      icon: 'search'
-    }
+      icon: 'search',
+    },
   ],
-  'datetime': [
+  datetime: [
     {
       id: 'is',
       label: 'Равно',
-      icon: 'equals'
+      icon: 'equals',
     },
     {
       id: 'isNot',
       label: 'Не равно',
-      icon: 'not-equals'
+      icon: 'not-equals',
     },
     {
       id: 'dateBefore',
       label: 'Меньше',
-      icon: 'less'
+      icon: 'less',
     },
     {
       id: 'dateAfter',
       label: 'Больше',
-      icon: 'greater'
+      icon: 'greater',
     },
     {
       id: 'dateBeforeOrEqual',
       label: 'Меньше или равно',
-      icon: 'less-than-equal'
+      icon: 'less-than-equal',
     },
     {
       id: 'dateAfterOrEqual',
       label: 'Больше или равно',
-      icon: 'greater-than-equal'
+      icon: 'greater-than-equal',
     },
     {
       id: 'dateBetween',
       label: 'В диапазоне',
-      icon: 'between'
+      icon: 'between',
     },
     {
       id: 'startsWith',
       label: 'Сбросить',
-      icon: 'search'
-    }
+      icon: 'search',
+    },
   ],
-  'boolean': [
+  boolean: [
     {
       id: 'contains',
       label: 'Содержит',
-      icon: 'contains'
+      icon: 'contains',
     },
     // {
     //   id: 'is',
@@ -225,9 +224,9 @@ export const FILTER_TYPE_ITEMS: { [key: string]: MenuItem[] } = {
     {
       id: 'startsWith',
       label: 'Сбросить',
-      icon: 'search'
-    }
-  ]
+      icon: 'search',
+    },
+  ],
 };
 
 // class FilterMatchMode {

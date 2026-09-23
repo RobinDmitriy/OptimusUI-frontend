@@ -24,6 +24,8 @@ import { InputRange } from '../input-range/input-range';
 import { FILTER_TYPE_ITEMS, IColumn, IFilterValue, IPossibleValue } from '../../../constants';
 import { MenuItem } from '@openng/optimus-ui/api';
 import { dateToString, isDatePicker } from '../../../utils';
+import { IconField } from '@openng/optimus-ui/iconfield';
+import { InputIcon } from '@openng/optimus-ui/inputicon';
 
 @Component({
   selector: 'app-table-column-filter',
@@ -38,6 +40,8 @@ import { dateToString, isDatePicker } from '../../../utils';
     NgClass,
     ColorView,
     InputRange,
+    IconField,
+    InputIcon,
   ],
   templateUrl: './table-column-filter.html',
   styleUrl: './table-column-filter.scss',
@@ -256,10 +260,10 @@ export class TableColumnFilter implements OnInit, OnDestroy {
     const oldRule = this.selectedRuleFilter.id;
     this.selectedRuleFilter = e.item;
     // console.log('onChangeRuleFilters e = ', e);
-    this.showRangeComponent.set(['between', 'dateBetween'].includes(e.item.id));
+    this.showRangeComponent.set('between' === e.item.id);
     if (this.showRangeComponent()) {
       this.openRangeComponent();
-    } else if (oldRule === 'between' || oldRule === 'dateBetween') {
+    } else if (oldRule === 'between') {
       this.rangeValue.set(null);
       this.closeRangeComponent();
     }
@@ -358,7 +362,7 @@ export class TableColumnFilter implements OnInit, OnDestroy {
    * @param event - данные события нажатия на левую клавишу мыши
    */
   onClickInput(event: Event) {
-    if (this.selectedRuleFilter.id === 'between' || this.selectedRuleFilter.id === 'dateBetween') {
+    if (this.selectedRuleFilter.id === 'between') {
       event.stopPropagation();
       this.showRangeComponent.set(true);
       this.openRangeComponent();
@@ -368,25 +372,27 @@ export class TableColumnFilter implements OnInit, OnDestroy {
   /**
    * Обновление отображения диапазона выбранных значений
    * @param rangeValues - массив из двух значений
-   * @param isNumber - признак того что данные имеют числовой тип
+   * @param type - тип данных
    */
-  updateRangeValue(rangeValues: any[], isNumber = true) {
-    this.rangeValue.set(this.getStringFromRange(rangeValues, isNumber));
+  updateRangeValue(rangeValues: any[], type = 'number') {
+    this.rangeValue.set(this.getStringFromRange(rangeValues, type));
     this.filterChange.emit({ value: rangeValues, matchMode: this.selectedRuleFilter.id! });
   }
 
   /**
    * Преобразование массива значений в строку
    * @param rangeValues - массив значений
-   * @param isNumber - признак того что данные имеют числовой тип
+   * @param type - тип данных
    * @private
    */
-  private getStringFromRange(rangeValues: any[], isNumber: boolean) {
-    if (isNumber) {
+  private getStringFromRange(rangeValues: any[], type: string) {
+    if (type === 'number') {
       return rangeValues.some((item) => item) ? rangeValues.join(' - ') : null;
     } else {
+      if (rangeValues.some((item) => item == null)) return null;
+      const format = type === 'date' ? 'DD.MM.YYYY' : 'DD.MM.YYYY HH:mm:ss';
       return rangeValues
-        .map((item, i) => (item ? dateToString(rangeValues[i], 'DD.MM.YYYY HH:mm:ss') : null))
+        .map((item, i) => (item ? dateToString(rangeValues[i], format) : null))
         .join(' - ');
     }
   }

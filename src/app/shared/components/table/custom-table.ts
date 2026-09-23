@@ -9,16 +9,16 @@ import { FormsModule } from '@angular/forms';
 import { InputText } from '@openng/optimus-ui/inputtext';
 import { Button } from '@openng/optimus-ui/button';
 import { ContextMenu } from '@openng/optimus-ui/contextmenu';
-import { FilterMetadata, MenuItem } from '@openng/optimus-ui/api';
+import { MenuItem } from '@openng/optimus-ui/api';
 import { TableService } from '../../services';
-import { IColumn, IFilterValue, ISortMeta } from '../../constants';
+import { IColumn, IColumnFilterMeta, IFilterValue, ISortMeta } from '../../constants';
 import { OverlayBadge } from '@openng/optimus-ui/overlaybadge';
 import { TableColumnFilter } from './table-column-filter/table-column-filter';
 
 interface IFetchOptions {
   first?: number;
   rows?: number;
-  filters?: Record<string, any>;
+  filters?: Record<string, IColumnFilterMeta>;
   globalFilter?: string | null;
 }
 
@@ -62,13 +62,19 @@ export class CustomTable {
   searchValue = signal<string | null>(null);
   totalRecords = signal(0);
   loading = signal(false);
+
+  filters = signal<Record<string, IColumnFilterMeta>>({});
   resetFilters = signal<boolean>(false);
 
   multiSortMeta = signal<ISortMeta[]>([]);
 
   showPanel = computed(() => this.showPanelInput() && this.data().length > 0);
   isSorted = computed(() => this.isSortedInput());
-  isNotFilters = computed(() => this.searchValue() === null);
+  isNotFilters = computed(() => this.searchValue() === null && !this.hasFilters());
+  hasFilters = computed(() => {
+    const filters = this.filters();
+    return Object.values(filters).some((m) => this.isFilterFilled(m));
+  });
 
   private tableService = inject(TableService);
 
@@ -256,27 +262,33 @@ export class CustomTable {
   }
 
   // ***********************************************************************************************
-  // ******************************* Функции для сортировки данных *********************************
+  // ******************************* Функции для фильтрации данных *********************************
   // ***********************************************************************************************
+  /**
+   * Проверка есть ли установленные фильтры
+   * @param meta - данные фильтра
+   * @private
+   */
+  private isFilterFilled(meta: IColumnFilterMeta | undefined): boolean {
+    if (!meta) return false;
+    const value = meta.value;
+    if (value === null || value === undefined || value === '') return false;
+    if (Array.isArray(value))
+      return value.length > 0 && value.some((x) => x !== null && x !== undefined && x !== '');
+    return true;
+  }
+
   /**
    * Очистка всех фильтров
    */
   clearAllFilters() {
-    // if (!this.dt) return;
-    //
-    // this.dt.clear();
     this.searchValue.set(null);
-    // this.selectedFilterColumn = null;
-    // this.dt.filterGlobal('', 'contains');
-    //
-    // this.resetFilterMaps();
-    //
-    // this.resetFilters.set(true);
-    // this.filteredData.set(null);
-    // this.currentFilterColumn.set(null);
-    // this.activeFilterField.set(null);
-    //
-    // setTimeout(() => this.resetFilters.set(false), 100);
+    this.filters.set({});
+    this.resetFilters.set(true);
+    this.dt?.clear();
+    this.reloadFromFirstPage();
+
+    setTimeout(() => this.resetFilters.set(false), 100);
   }
 
   /**
@@ -309,19 +321,24 @@ export class CustomTable {
     }
 
     // Адаптируем фильтр для режима сравнения
-    let filter: FilterMetadata = {
+    let filter: IColumnFilterMeta = {
       value: filterValue,
       matchMode: filterData.matchMode,
       operator: 'and',
+      type: column.type,
     };
 
-    // if (this.comparedMode && column.type !== 'object') {
-    //   filter = this.adaptFilterForComparisonMode(filter);
-    // }
-    console.log('onFilterChange filter = ', filter);
+    const currentFilters = { ...this.filters() };
 
-    // this.singleFilterColumn.set(column.field, filter);
-    // this.currentFilterColumn.set(column);
+    if (this.isFilterFilled(filter)) {
+      currentFilters[column.field] = filter;
+    } else {
+      delete currentFilters[column.field];
+    }
+
+    this.filters.set(currentFilters);
+    console.log('onFilterChange filterData = ', filter);
+    this.reloadFromFirstPage();
   }
 
   // ***********************************************************************************************
@@ -335,10 +352,21 @@ export class CustomTable {
     console.log('loadData event = ', event);
     if (!event) return;
 
+    if (event.filters) {
+      const next: Record<string, IColumnFilterMeta> = { ...this.filters() };
+      for (const [field, meta] of Object.entries(
+        event.filters as Record<string, IColumnFilterMeta>,
+      )) {
+        if (this.isFilterFilled(meta)) next[field] = meta;
+        else delete next[field];
+      }
+      this.filters.set(next);
+    }
+
     this.fetch({
       first: event.first ?? 0,
       rows: event.rows ?? 10,
-      filters: event.filters as Record<string, any>,
+      filters: this.filters(),
       globalFilter: event.globalFilter as string | null,
     });
   }
@@ -371,14 +399,20 @@ export class CustomTable {
    */
   private fetch(options: IFetchOptions) {
     this.loading.set(true);
+    const mergedFilters = { ...(options.filters ?? {}), ...this.filters() };
+
+    const filters: Record<string, IColumnFilterMeta> = {};
+    for (const [field, meta] of Object.entries(mergedFilters)) {
+      if (this.isFilterFilled(meta)) filters[field] = meta;
+    }
 
     this.tableService
       .getData(this.data(), {
         multiSortMeta: this.multiSortMeta(),
-        filters: options.filters ?? {},
+        filters,
         first: options.first ?? 0,
         rows: options.rows ?? 10,
-        globalFilter: options.globalFilter ?? null,
+        globalFilter: options.globalFilter ?? this.searchValue() ?? null,
       })
       .subscribe((res) => {
         this.value = res.data;
@@ -399,5 +433,6 @@ export class CustomTable {
     });
 
     effect(() => console.log('effect columns = ', this.columns()));
+    effect(() => console.log('effect filters = ', this.filters()));
   }
 }
