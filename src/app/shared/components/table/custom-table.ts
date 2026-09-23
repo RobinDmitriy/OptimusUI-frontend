@@ -57,6 +57,7 @@ export class CustomTable {
   sortMode = input<'single' | 'multiple'>('single');
   showRowFilters = input<boolean>(true);
   showClearAllFilterButton = input<boolean>(true);
+  showPaginator = input<boolean>(true);
 
   value: any;
   searchValue = signal<string | null>(null);

@@ -7,12 +7,15 @@
            [value]="value"
            [sortMode]="sortMode()"
            [lazy]="true"
-           [paginator]="true"
-           [rows]="10"
+           [paginator]="showPaginator()"
+           [rows]="20"
            [totalRecords]="totalRecords()"
            [loading]="loading()"
            (onLazyLoad)="loadData($event)"
            [globalFilterFields]="['family']"
+           [showCurrentPageReport]="true"
+           [rowsPerPageOptions]="[15, 20, 25, { showAll: 'Все' }]"
+           currentPageReportTemplate="Записи с {first} по {last} (Всего записей: {totalRecords})"
            id="tableData"
   >
     @if (showToolbar()) {
