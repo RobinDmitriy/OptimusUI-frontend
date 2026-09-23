@@ -204,7 +204,7 @@ export class TableService {
   }
 
   /**
-   * Применение фильтров PrimeNG.
+   * Применение фильтров
    * Структура: { field: { value, matchMode } }
    * @param data - массив исходных данных
    * @param filters - установленные фильтры
