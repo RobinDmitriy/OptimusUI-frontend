@@ -129,14 +129,18 @@ export class TableService {
   }
 
   /**
-   * Сравнение строк (локаль ru).
+   * Сравнение строк (локаль ru)
+   * @param a - первое значение
+   * @param b - второе значение
    */
   private compareStrings(a: any, b: any): number {
     return String(a).localeCompare(String(b), 'ru');
   }
 
   /**
-   * Сравнение чисел.
+   * Сравнение чисел
+   * @param a - первое значение
+   * @param b - второе значение
    */
   private compareNumbers(a: any, b: any): number {
     const na = Number(a);
@@ -152,7 +156,9 @@ export class TableService {
   }
 
   /**
-   * Сравнение дат.
+   * Сравнение дат
+   * @param a - первое значение
+   * @param b - второе значение
    * @param withTime - true для datetime (по моменту времени), false для date (по дню)
    */
   private compareDates(a: any, b: any, withTime: boolean): number {
@@ -169,6 +175,8 @@ export class TableService {
   /**
    * Сравнение object / object[] по текстовому полю.
    * Для массива берём первую метку — этого достаточно для стабильной сортировки.
+   * @param a - первое значение
+   * @param b - второе значение
    */
   private compareObjects(a: any, b: any): number {
     const la = this.extractObjectLabels(a, 'name')[0] ?? '';
@@ -179,6 +187,8 @@ export class TableService {
   /**
    * Fallback для сортировки без type.
    * Определяет тип значения «на лету» — как делал старый normalize.
+   * @param a - первое значение
+   * @param b - второе значение
    */
   private compareFallback(a: any, b: any): number {
     const va = this.normalize(a);
