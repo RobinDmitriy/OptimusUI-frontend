@@ -9,7 +9,7 @@ import {
   output,
   Renderer2,
   signal,
-  ViewChild
+  ViewChild,
 } from '@angular/core';
 import { Select } from '@openng/optimus-ui/select';
 import { FormsModule } from '@angular/forms';
@@ -28,7 +28,7 @@ import { IconField } from '@openng/optimus-ui/iconfield';
 import { InputIcon } from '@openng/optimus-ui/inputicon';
 
 @Component({
-  selector: 'app-table-column-filter',
+  selector: 'app-table-row-filter',
   imports: [
     Select,
     FormsModule,
@@ -43,10 +43,10 @@ import { InputIcon } from '@openng/optimus-ui/inputicon';
     IconField,
     InputIcon,
   ],
-  templateUrl: './table-column-filter.html',
-  styleUrl: './table-column-filter.scss',
+  templateUrl: './table-row-filter.html',
+  styleUrl: './table-row-filter.scss',
 })
-export class TableColumnFilter implements OnInit, OnDestroy {
+export class TableRowFilter implements OnInit, OnDestroy {
   @ViewChild('menu') menu!: Menu;
   @ViewChild('inputNumber') inputNumber!: InputNumber;
   @ViewChild('inputText') inputTextRef!: ElementRef<HTMLInputElement>;
@@ -134,21 +134,21 @@ export class TableColumnFilter implements OnInit, OnDestroy {
    */
   ngOnInit(): void {
     // if (this.column().optionLabel) {
-      // const valueExpr = this.column().lookup?.valueExpr!;
-      // const optionValue = this.column().lookup?.displayExpr!;
-      // const all = {[valueExpr]: 0, [optionValue]: '(Все)'};
-      // this.options = [all, ...this.column().lookup?.dataSource!];
-      // this.value.set(this.filterValue() ?? 0);
+    // const valueExpr = this.column().lookup?.valueExpr!;
+    // const optionValue = this.column().lookup?.displayExpr!;
+    // const all = {[valueExpr]: 0, [optionValue]: '(Все)'};
+    // this.options = [all, ...this.column().lookup?.dataSource!];
+    // this.value.set(this.filterValue() ?? 0);
     // } else {
-      const typeColumn = this.column().type;
-      if (typeColumn !== 'color') {
-        this.items = FILTER_TYPE_ITEMS[typeColumn].map((item) => ({
-          ...item,
-          command: (event) => this.onChangeRuleFilters(event),
-        }));
-      }
+    const typeColumn = this.column().type;
+    if (typeColumn !== 'color') {
+      this.items = FILTER_TYPE_ITEMS[typeColumn].map((item) => ({
+        ...item,
+        command: (event) => this.onChangeRuleFilters(event),
+      }));
+    }
 
-      this.value.set(this.filterValue());
+    this.value.set(this.filterValue());
     // }
   }
 

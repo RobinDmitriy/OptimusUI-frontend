@@ -1,0 +1,26 @@
+::ng-deep #listBox.p-listbox {
+  border: none;
+  box-shadow: none;
+}
+
+::ng-deep #treeValues.p-tree {
+  padding: 0;
+}
+
+::ng-deep .smooth-text-button.p-button.smooth-text-button {
+  color: var(--p-button-secondary-color) !important;
+  opacity: var(--p-disabled-opacity);
+  background: transparent !important;
+  border: none !important;
+  padding: 0 0 0 12px !important;
+  transition: color 0.2s ease, text-decoration 0.2s ease !important;
+  font-size: 14px !important;
+  font-weight: normal !important;
+  text-decoration: none !important;
+}
+
+::ng-deep .smooth-text-button.p-button.smooth-text-button:hover {
+  color: var(--p-button-plain-color) !important;
+  opacity: 1 !important;
+  //text-decoration: underline !important;
+}

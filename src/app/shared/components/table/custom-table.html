@@ -133,29 +133,80 @@
               [style.user-select]="'none'"
               [style.padding-right]="multiSortMeta().length > 1 ? '24px' : '0.75rem'"
           >
-            <div class="flex flex-row items-center justify-between">
-              {{ col.caption }}
+            <!--            <div class="flex flex-row items-center justify-between">-->
+            <!--              {{ col.caption }}-->
 
-              @if (sortOrderFor(col.field) !== 0) {
-                @if (sortIndexFor(col.field) >= 0 && multiSortMeta().length > 1) {
-                  <p-overlay-badge [value]="sortIndexFor(col.field) + 1"
-                                   [hidden]="!(sortIndexFor(col.field) >= 0 && multiSortMeta().length > 1)"
-                                   badgeSize="small"
-                                   [style]="{'top': '2px', 'right': '-8px'}"
-                  >
-                    <i class="pi"
-                       [class.pi-sort-amount-up-alt]="sortOrderFor(col.field) === 1"
-                       [class.pi-sort-amount-down]="sortOrderFor(col.field) === -1"
-                    ></i>
-                  </p-overlay-badge>
-                } @else {
-                  <i class="pi"
-                     [class.pi-sort-amount-up-alt]="sortOrderFor(col.field) === 1"
-                     [class.pi-sort-amount-down]="sortOrderFor(col.field) === -1"
-                  ></i>
-                }
-              }
-            </div>
+            <!--              <div class="flex flex-row items-center">-->
+            <!--                @if (sortOrderFor(col.field) !== 0) {-->
+            <!--                  @if (sortIndexFor(col.field) >= 0 && multiSortMeta().length > 1) {-->
+            <!--                    <p-overlay-badge [value]="sortIndexFor(col.field) + 1"-->
+            <!--                                     [hidden]="!(sortIndexFor(col.field) >= 0 && multiSortMeta().length > 1)"-->
+            <!--                                     badgeSize="small"-->
+            <!--                                     [style]="{'top': '2px', 'right': '-8px'}"-->
+            <!--                    >-->
+            <!--                      <i class="pi"-->
+            <!--                         [class.pi-sort-amount-up-alt]="sortOrderFor(col.field) === 1"-->
+            <!--                         [class.pi-sort-amount-down]="sortOrderFor(col.field) === -1"-->
+            <!--                      ></i>-->
+            <!--                    </p-overlay-badge>-->
+            <!--                  } @else {-->
+            <!--                    <i class="pi"-->
+            <!--                       [class.pi-sort-amount-up-alt]="sortOrderFor(col.field) === 1"-->
+            <!--                       [class.pi-sort-amount-down]="sortOrderFor(col.field) === -1"-->
+            <!--                    ></i>-->
+            <!--                  }-->
+            <!--                }-->
+
+            <!--                @if (showColumnFilter()) {-->
+            <!--                  <app-header-column-filter-button (onClick)="onShowFilterMultiSelect($event, col.field)"-->
+            <!--                                           [count]="getCountMultiFilterValue(col.field)"-->
+            <!--                                           [field]="col.field"-->
+            <!--                  >-->
+            <!--                    &lt;!&ndash;                    @if (activeFilterField() === col.field) {&ndash;&gt;-->
+            <!--                    &lt;!&ndash;                      <app-table-header-column-filter&ndash;&gt;-->
+            <!--                    &lt;!&ndash;                        (columnFilters)="updateColumnFilters($event, col)"&ndash;&gt;-->
+            <!--                    &lt;!&ndash;                        [column]="col"&ndash;&gt;-->
+            <!--                    &lt;!&ndash;                        [currentFilter]="getCurrentFilter(col.field)"&ndash;&gt;-->
+            <!--                    &lt;!&ndash;                        [options]="possibleValueFilters().get(col.field) ?? []"&ndash;&gt;-->
+            <!--                    &lt;!&ndash;                      ></app-table-header-column-filter>&ndash;&gt;-->
+            <!--                    &lt;!&ndash;                    }&ndash;&gt;-->
+            <!--                  </app-header-column-filter-button>-->
+            <!--                }-->
+            <!--              </div>-->
+            <!--            </div>-->
+            <!-- 1. Нет сортировки и нет фильтра — заголовок по центру -->
+            @if (sortOrderFor(col.field) === 0 && !showColumnFilter()) {
+              <div class="flex flex-row items-center justify-center">
+                {{ col.caption }}
+              </div>
+            }
+
+            <!-- 2. Есть сортировка, фильтр не показан — заголовок слева, иконка сортировки справа -->
+            @if (sortOrderFor(col.field) !== 0 && !showColumnFilter()) {
+              <div class="flex flex-row items-center justify-between">
+                <span>{{ col.caption }}</span>
+                <ng-container *ngTemplateOutlet="sortIcon; context: { $implicit: col }"></ng-container>
+              </div>
+            }
+
+            <!-- 3. Показан фильтр, сортировки нет — заголовок слева, кнопка фильтра справа -->
+            @if (sortOrderFor(col.field) === 0 && showColumnFilter()) {
+              <div class="flex flex-row items-center justify-between">
+                <span>{{ col.caption }}</span>
+                <ng-container *ngTemplateOutlet="columnFilter; context: { $implicit: col }"></ng-container>
+              </div>
+            }
+
+            <!-- 4. Показан фильтр и есть сортировка — заголовок, иконка сортировки, кнопка фильтра справа -->
+            @if (sortOrderFor(col.field) !== 0 && showColumnFilter()) {
+              <div class="flex flex-row items-center justify-between">
+                <div class="flex flex-row items-center gap-1">
+                  <span>{{ col.caption }}</span>
+                  <ng-container *ngTemplateOutlet="sortIcon; context: { $implicit: col }"></ng-container>
+                </div>
+                <ng-container *ngTemplateOutlet="columnFilter; context: { $implicit: col }"></ng-container>
+              </div>
+            }
           </th>
         }
       </tr>
@@ -175,18 +226,54 @@
               >
                 <ng-template #filter let-filterValue>
                   <!--                  [options]="possibleValueFilters().get(column.field) ?? []"-->
-                  <app-table-column-filter (filterChange)="onFilterChange(column, $event)"
-                                           [column]="column"
-                                           [filterValue]="resetFilters() ? null : filterValue"
-                                           [options]="[]"
-                                           [reset]="resetFilters()"
-                  ></app-table-column-filter>
+                  <app-table-row-filter (filterChange)="onFilterChange(column, $event)"
+                                        [column]="column"
+                                        [filterValue]="resetFilters() ? null : filterValue"
+                                        [options]="[]"
+                                        [reset]="resetFilters()"
+                  ></app-table-row-filter>
                 </ng-template>
               </p-column-filter>
             </th>
           }
         </tr>
       }
+    </ng-template>
+
+    <ng-template #sortIcon let-col>
+      @if (sortIndexFor(col.field) >= 0 && multiSortMeta().length > 1) {
+        <p-overlay-badge [value]="sortIndexFor(col.field) + 1"
+                         badgeSize="small"
+                         [style]="{'right': '-6px'}"
+        >
+          <i class="pi"
+             [class.pi-sort-amount-up-alt]="sortOrderFor(col.field) === 1"
+             [class.pi-sort-amount-down]="sortOrderFor(col.field) === -1"
+          ></i>
+        </p-overlay-badge>
+      } @else {
+        <i class="pi"
+           [class.pi-sort-amount-up-alt]="sortOrderFor(col.field) === 1"
+           [class.pi-sort-amount-down]="sortOrderFor(col.field) === -1"
+        ></i>
+      }
+    </ng-template>
+
+    <!--Шаблон фильтра в заголовке столбца-->
+    <ng-template #columnFilter let-col>
+      <app-header-column-filter-button (onClick)="onShowFilterMultiSelect($event, col.field)"
+                                       [count]="getCountMultiFilterValue(col.field)"
+                                       [field]="col.field"
+      >
+        @if (activeFilterField() === col.field) {
+          <app-table-header-column-filter [column]="col"
+                                          [currentFilter]="selectedFilterValues()[col.field] ?? []"
+                                          [options]="possibleValues()[col.field] ?? []"
+                                          [loading]="possibleLoading()[col.field] ?? false"
+                                          (columnFilters)="onHeaderFilterApply(col, $event)"
+          ></app-table-header-column-filter>
+        }
+      </app-header-column-filter-button>
     </ng-template>
 
     <ng-template #body let-rowData let-columns="columns">

@@ -4,7 +4,9 @@ export { Header } from './header/header';
 export { CustomTable } from './table/custom-table';
 export { ColorView } from './table/color-view/color-view';
 export { InputRange } from './table/input-range/input-range';
-export { TableColumnFilter } from './table/table-column-filter/table-column-filter';
+export { TableRowFilter } from './table/table-row-filter/table-row-filter';
+export { HeaderColumnFilterButton } from './table/header-column-filter-button/header-column-filter-button';
+export { TableHeaderColumnFilter } from './table/table-header-column-filter/table-header-column-filter';
 
 // export {AggregationPeriods} from './aggregation-periods/aggregation-periods';
 // // export * from './components/charts/pie-chart/pie-chart';
@@ -14,11 +16,11 @@ export { TableColumnFilter } from './table/table-column-filter/table-column-filt
 // export {ChipSelected} from './chip-selected/chip-selected';
 // export {CustomIcon} from './custom-icon/custom-icon';
 // export {CustomTable} from './custom-table/custom-table';
-// export {TableColumnFilter} from './custom-table/table-column-filter/table-column-filter';
+// export {TableRowFilter} from './custom-table/table-row-filter/table-row-filter';
 // export {
-//   TableColumnMultiSelectFilter
+//   TableHeaderColumnFilter
 // } from './custom-table/table-column-multi-selection-filter/table-column-multi-selection-filter';
-// export {MultiFilterButton} from './custom-table/multi-filter-button/multi-filter-button';
+// export {HeaderColumnFilterButton} from './custom-table/header-column-filter-button/header-column-filter-button';
 // export {ColumnSelectorList} from './custom-table/column-selector/column-selector';
 // export {InputRange} from './custom-table/input-range/input-range';
 // export {ComparePeriodSelect} from './custom-table/compare-period-select/compare-period-select';

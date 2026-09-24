@@ -1,0 +1,32 @@
+@if (count() > 0) {
+  <p-overlay-badge [value]="count()"
+                   badgeSize="small"
+                   id="countValue"
+                   severity="info"
+                   [style]="{'top': '1px'}"
+  >
+    <p-button #btn
+              (onClick)="onButtonClick($event)"
+              [rounded]="true"
+              [text]="true"
+              icon="pi pi-filter-fill"
+              severity="secondary"
+    ></p-button>
+  </p-overlay-badge>
+} @else {
+  <p-button #btn
+            (onClick)="onButtonClick($event)"
+            [rounded]="true"
+            [text]="true"
+            icon="pi pi-filter"
+            severity="secondary"
+  ></p-button>
+}
+
+<p-popover #popover
+           [attr.data-popover-field]="field()"
+           [focusOnShow]="false"
+           [style]="{'--p-popover-content-padding': '0'}"
+>
+  <ng-content></ng-content>
+</p-popover>

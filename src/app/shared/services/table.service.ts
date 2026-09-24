@@ -1,6 +1,13 @@
 import { Service } from '@angular/core';
 import { delay, Observable, of } from 'rxjs';
-import { IColumnFilterMeta, ILazyLoadParams, ILazyLoadResult, ISortMeta } from '../constants';
+import {
+  IColumn,
+  IColumnFilterMeta,
+  ILazyLoadParams,
+  ILazyLoadResult,
+  IPossibleValue,
+  ISortMeta,
+} from '../constants';
 import { stringToDate } from '../utils';
 
 @Service()
@@ -566,5 +573,123 @@ export class TableService {
     }
 
     return String(value);
+  }
+
+  /**
+   * Имитация серверного запроса за уникальными значениями колонки.
+   * Учитывает переданные фильтры (кроме фильтра по самой колонке) и глобальный поиск.
+   * @param source - исходный массив данных таблицы
+   * @param options - параметры запроса
+   * @param options.column - колонка, по которой собираются уникальные значения
+   * @param options.filters - активные фильтры (без фильтра по column.field)
+   * @param options.globalFilter - значение глобального поиска
+   */
+  getPossibleValues<T extends Record<string, any>>(
+    source: T[],
+    options: {
+      column: IColumn;
+      filters: Record<string, IColumnFilterMeta>;
+      globalFilter: string | null;
+    },
+  ): Observable<IPossibleValue[]> {
+    if (!source || source.length === 0) {
+      // return of([]).pipe(delay(300));
+      return of([]);
+    }
+
+    const { column } = options;
+    let result = [...source];
+
+    // 1. Глобальный поиск
+    const globalFilter = this.normalizeGlobalFilter(options.globalFilter);
+    if (globalFilter.length) {
+      result = result.filter((row) =>
+        globalFilter.some((q) =>
+          Object.values(row).some((v) =>
+            String(this.getValueForFiltering(v) ?? '')
+              .toLowerCase()
+              .includes(q),
+          ),
+        ),
+      );
+    }
+
+    // 2. Фильтры по другим колонкам
+    if (options.filters && Object.keys(options.filters).length) {
+      result = this.applyFilters(result, options.filters);
+    }
+
+    // 3. Сбор уникальных значений по полю
+    const map = new Map<string, IPossibleValue>();
+    for (const row of result) {
+      const raw = row[column.field];
+      if (raw === null || raw === undefined) continue;
+
+      const values = Array.isArray(raw) ? raw : [raw];
+      for (const v of values) {
+        const key = this.getPossibleValueKey(v, column);
+        if (key === null) continue;
+        if (map.has(key)) continue;
+
+        map.set(key, this.toPossibleValue(v, column));
+      }
+    }
+
+    // 4. Сортировка по алфавиту
+    const sorted = [...map.values()].sort((a, b) =>
+      String(a.name).localeCompare(String(b.name), 'ru'),
+    );
+
+    // return of(sorted).pipe(delay(300));
+    return of(sorted);
+  }
+
+  /**
+   * Ключ уникальности значения для дедупликации в Map.
+   * @param value - значение ячейки
+   * @param column - колонка (нужна для optionValue)
+   */
+  private getPossibleValueKey(value: any, column: IColumn): string | null {
+    if (value === null || value === undefined) return null;
+
+    if (typeof value === 'object') {
+      const valueField = column.optionValue ?? this.detectValueField(value);
+      const id = value[valueField];
+      return id != null ? `${typeof id}:${id}` : null;
+    }
+    return `${typeof value}:${value}`;
+  }
+
+  /**
+   * Преобразование значения ячейки в IPossibleValue.
+   * @param value - значение ячейки
+   * @param column - колонка (нужна для optionLabel / optionValue)
+   */
+  private toPossibleValue(value: any, column: IColumn): IPossibleValue {
+    if (value !== null && typeof value === 'object') {
+      const labelField = column.optionLabel ?? this.detectLabelField(value);
+      const valueField = column.optionValue ?? this.detectValueField(value);
+
+      const label = value[labelField] ?? value.name ?? value.id ?? '';
+      const val = value[valueField] ?? value.id ?? value.name;
+
+      return { name: String(label), value: val, selected: false };
+    }
+
+    return { name: String(value), value, selected: false };
+  }
+
+  /**
+   * Эвристика для определения текстового поля объекта, если optionLabel не задан.
+   */
+  private detectLabelField(value: any): string {
+    return ['name', 'label', 'title', 'caption'].find((k) => k in value) ?? 'id';
+  }
+
+  /**
+   * Эвристика для определения поля-значения объекта, если optionValue не задан.
+   */
+  private detectValueField(value: any): string {
+    return ['id', 'value', 'code', 'key'].find((k) => k in value) ?? 'name';
   }
 }

@@ -1,6 +1,16 @@
-import { Component, computed, effect, inject, input, signal, ViewChild } from '@angular/core';
+import {
+  Component,
+  computed,
+  effect,
+  inject,
+  input,
+  QueryList,
+  signal,
+  ViewChild,
+  ViewChildren,
+} from '@angular/core';
 import { Table, TableLazyLoadEvent, TableModule } from '@openng/optimus-ui/table';
-import { DatePipe } from '@angular/common';
+import { DatePipe, NgTemplateOutlet } from '@angular/common';
 import { Card } from '@openng/optimus-ui/card';
 import { Toolbar } from '@openng/optimus-ui/toolbar';
 import { IconField } from '@openng/optimus-ui/iconfield';
@@ -11,9 +21,17 @@ import { Button } from '@openng/optimus-ui/button';
 import { ContextMenu } from '@openng/optimus-ui/contextmenu';
 import { MenuItem } from '@openng/optimus-ui/api';
 import { TableService } from '../../services';
-import { IColumn, IColumnFilterMeta, IFilterValue, ISortMeta } from '../../constants';
+import {
+  IColumn,
+  IColumnFilterMeta,
+  IFilterValue,
+  IPossibleValue,
+  ISortMeta,
+} from '../../constants';
 import { OverlayBadge } from '@openng/optimus-ui/overlaybadge';
-import { TableColumnFilter } from './table-column-filter/table-column-filter';
+import { TableRowFilter } from './table-row-filter/table-row-filter';
+import { TableHeaderColumnFilter } from './table-header-column-filter/table-header-column-filter';
+import { HeaderColumnFilterButton } from './header-column-filter-button/header-column-filter-button';
 
 interface IFetchOptions {
   first?: number;
@@ -34,8 +52,11 @@ interface IFetchOptions {
     InputText,
     Button,
     ContextMenu,
+    NgTemplateOutlet,
     OverlayBadge,
-    TableColumnFilter,
+    TableRowFilter,
+    TableHeaderColumnFilter,
+    HeaderColumnFilterButton,
   ],
   selector: 'app-custom-table',
   styleUrl: './custom-table.css',
@@ -43,6 +64,7 @@ interface IFetchOptions {
 })
 export class CustomTable {
   @ViewChild('dt') dt!: Table;
+  @ViewChildren(HeaderColumnFilterButton) filterButtons!: QueryList<HeaderColumnFilterButton>;
   @ViewChild('cm') cm!: ContextMenu;
 
   columns = input<IColumn[] | undefined>(undefined);
@@ -56,6 +78,7 @@ export class CustomTable {
   isSortedInput = input<boolean>(true);
   sortMode = input<'single' | 'multiple'>('single');
   showRowFilters = input<boolean>(true);
+  showColumnFilter = input<boolean>(true);
   showClearAllFilterButton = input<boolean>(true);
   showPaginator = input<boolean>(true);
 
@@ -64,8 +87,14 @@ export class CustomTable {
   totalRecords = signal(0);
   loading = signal(false);
 
+  activeFilterField = signal<string | null>(null);
   filters = signal<Record<string, IColumnFilterMeta>>({});
+  // multiFilterColumn = new Map<string, FilterMetadata | null>();
+  multiFilterColumn = signal<Record<string, IColumnFilterMeta>>({});
   resetFilters = signal<boolean>(false);
+
+  possibleValues = signal<Record<string, IPossibleValue[]>>({});
+  possibleLoading = signal<Record<string, boolean>>({});
 
   multiSortMeta = signal<ISortMeta[]>([]);
 
@@ -76,7 +105,17 @@ export class CustomTable {
     const filters = this.filters();
     return Object.values(filters).some((m) => this.isFilterFilled(m));
   });
+  selectedFilterValues = computed<Record<string, any[]>>(() => {
+    const filters = this.filters();
+    const map: Record<string, any[]> = {};
+    for (const [field, meta] of Object.entries(filters)) {
+      if (!meta?.value) continue;
+      map[field] = Array.isArray(meta.value) ? meta.value : [meta.value];
+    }
+    return map;
+  });
 
+  private possibleCache = new Map<string, IPossibleValue[]>();
   private tableService = inject(TableService);
 
   constructor() {
@@ -293,6 +332,7 @@ export class CustomTable {
     this.filters.set({});
     this.resetFilters.set(true);
     this.dt?.clear();
+    this.clearPossibleCache();
     this.reloadFromFirstPage();
 
     setTimeout(() => this.resetFilters.set(false), 100);
@@ -348,6 +388,131 @@ export class CustomTable {
     this.reloadFromFirstPage();
   }
 
+  /**
+   * Открытие фильтра в шапке колонки.
+   * @param event - событие клика
+   * @param field - код столбца
+   */
+  onShowFilterMultiSelect(event: MouseEvent, field: string): void {
+    event.stopPropagation();
+    this.activeFilterField.set(field);
+    this.loadPossibleValues(field);
+  }
+
+  /**
+   * Количество выбранных значений фильтра для колонки.
+   * @param field - код столбца
+   */
+  getCountMultiFilterValue(field: string): number {
+    const meta = this.filters()[field];
+    if (!meta || !meta.value) return 0;
+    return Array.isArray(meta.value) ? meta.value.length : 1;
+  }
+
+  /**
+   * Обработка применения фильтра из шапки таблицы.
+   * @param column - колонка
+   * @param filterData - данные фильтра из дочернего компонента
+   */
+  onHeaderFilterApply(column: IColumn, filterData: IColumnFilterMeta | null): void {
+    const currentFilters = { ...this.filters() };
+
+    if (filterData && this.isFilterFilled(filterData)) {
+      currentFilters[column.field] = {
+        ...filterData,
+        type: column.type,
+        operator: filterData.operator ?? 'and',
+      };
+    } else {
+      delete currentFilters[column.field];
+    }
+
+    const button = this.filterButtons.find((b) => b.field() === column.field);
+    button?.hidePopover();
+    this.activeFilterField.set(null);
+
+    this.filters.set(currentFilters);
+    this.reloadFromFirstPage();
+  }
+
+  /**
+   * Загрузка уникальных значений для колонки с учётом активных фильтров
+   * (кроме фильтра по самой колонке) и глобального поиска.
+   * @param field - код столбца таблицы
+   */
+  loadPossibleValues(field: string): void {
+    const column = this.columns()?.find((c) => c.field === field);
+    if (!column) return;
+
+    // Для типов, где список значений не имеет смысла — не грузим
+    if (
+      !['object', 'object[]', 'boolean', 'string', 'number', 'date', 'datetime'].includes(
+        column.type,
+      )
+    ) {
+      this.possibleValues.update((m) => ({ ...m, [field]: [] }));
+      return;
+    }
+
+    const filters = this.filtersExcept(field);
+    const key = this.buildPossibleCacheKey(field, filters, this.searchValue());
+
+    const cached = this.possibleCache.get(key);
+    if (cached) {
+      this.possibleValues.update((m) => ({ ...m, [field]: cached }));
+      return;
+    }
+
+    this.possibleLoading.update((m) => ({ ...m, [field]: true }));
+
+    this.tableService
+      .getPossibleValues(this.data(), {
+        column,
+        filters,
+        globalFilter: this.searchValue(),
+      })
+      .subscribe({
+        next: (values) => {
+          this.possibleCache.set(key, values);
+          this.possibleValues.update((m) => ({ ...m, [field]: values }));
+          this.possibleLoading.update((m) => ({ ...m, [field]: false }));
+        },
+        error: () => {
+          this.possibleLoading.update((m) => ({ ...m, [field]: false }));
+        },
+      });
+  }
+
+  /**
+   * Фильтры по всем колонкам, кроме указанной.
+   * @param field - код столбца, который исключаем
+   */
+  private filtersExcept(field: string): Record<string, IColumnFilterMeta> {
+    const { [field]: _, ...rest } = this.filters();
+    return rest;
+  }
+
+  /**
+   * Ключ кэша уникальных значений.
+   * @param field - код столбца
+   * @param filters - фильтры по другим колонкам
+   * @param globalFilter - значение глобального поиска
+   */
+  private buildPossibleCacheKey(
+    field: string,
+    filters: Record<string, IColumnFilterMeta>,
+    globalFilter: string | null,
+  ): string {
+    return JSON.stringify({ field, filters, globalFilter });
+  }
+
+  /**
+   * Сброс кэша уникальных значений.
+   */
+  private clearPossibleCache(): void {
+    this.possibleCache.clear();
+    this.possibleValues.set({});
+  }
   // ***********************************************************************************************
   // ******************************* Функции для обновления данных *********************************
   // ***********************************************************************************************
@@ -361,9 +526,14 @@ export class CustomTable {
 
     if (event.filters) {
       const next: Record<string, IColumnFilterMeta> = { ...this.filters() };
-      for (const [field, meta] of Object.entries(
+      const columns = this.columns() ?? [];
+
+      for (const [field, rawMeta] of Object.entries(
         event.filters as Record<string, IColumnFilterMeta>,
       )) {
+        const column = columns.find((c) => c.field === field);
+        const meta = column ? { ...rawMeta, type: column.type } : rawMeta;
+
         if (this.isFilterFilled(meta)) next[field] = meta;
         else delete next[field];
       }
@@ -435,8 +605,10 @@ export class CustomTable {
   private initValue() {
     effect(() => {
       console.log('effect data = ', this.data());
-      // this.value = this.data();
+      // untracked(() => {
+      this.clearPossibleCache();
       this.reloadFromFirstPage();
+      // });
     });
 
     effect(() => console.log('effect columns = ', this.columns()));
