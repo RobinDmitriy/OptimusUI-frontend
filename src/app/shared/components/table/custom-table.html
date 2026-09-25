@@ -270,6 +270,7 @@
           <app-table-header-column-filter [column]="col"
                                           [currentFilter]="selectedFilterValues()[col.field] ?? []"
                                           [options]="possibleValues()[col.field] ?? []"
+                                          [treeData]="possibleTrees()[col.field] ?? []"
                                           [loading]="possibleLoading()[col.field] ?? false"
                                           (columnFilters)="onHeaderFilterApply(col, $event)"
           ></app-table-header-column-filter>

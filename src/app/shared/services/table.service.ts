@@ -3,12 +3,15 @@ import { delay, Observable, of } from 'rxjs';
 import {
   IColumn,
   IColumnFilterMeta,
+  IDateFilterValue,
   ILazyLoadParams,
   ILazyLoadResult,
   IPossibleValue,
   ISortMeta,
 } from '../constants';
 import { stringToDate } from '../utils';
+import { MONTH_NAMES_RU } from './common';
+import { TreeNode } from '@openng/optimus-ui/api';
 
 @Service()
 export class TableService {
@@ -448,6 +451,26 @@ export class TableService {
       case 'in': {
         if (!Array.isArray(value)) return false;
         return value.some((x) => {
+          // 1. Обратная совместимость: если пришёл Date — сравниваем точно
+          if (x instanceof Date) {
+            const v = this.toDate(x, withTime);
+            return !!v && cmp(c, v) === 0;
+          }
+
+          // 2. Компактное представление IDateFilterValue
+          if (x && typeof x === 'object' && typeof x.year === 'number') {
+            const y = c.getFullYear();
+            if (y !== x.year) return false;
+
+            if (x.month == null) return true; // весь год
+            const m = c.getMonth() + 1;
+            if (m !== x.month) return false;
+
+            if (x.day == null) return true; // весь месяц
+            return c.getDate() === x.day; // конкретный день
+          }
+
+          // 3. Строки / числа — как раньше
           const v = this.toDate(x, withTime);
           return !!v && cmp(c, v) === 0;
         });
@@ -658,6 +681,162 @@ export class TableService {
 
     // return of(sorted).pipe(delay(300));
     return of(sorted);
+  }
+
+  /**
+   * Имитация серверного запроса за деревом дат для фильтра в шапке колонки.
+   * Строит иерархию год → месяц → день из уникальных дат отфильтрованных данных.
+   * @param source - исходный массив данных таблицы
+   * @param options - параметры запроса
+   * @param options.column - колонка типа date / datetime
+   * @param options.filters - активные фильтры (без фильтра по column.field)
+   * @param options.globalFilter - значение глобального поиска
+   */
+  getPossibleDateTree<T extends Record<string, any>>(
+    source: T[],
+    options: {
+      column: IColumn;
+      filters: Record<string, IColumnFilterMeta[]>;
+      globalFilter: string | null;
+    },
+  ): Observable<TreeNode[]> {
+    if (!source || source.length === 0) {
+      return of([]);
+    }
+
+    const { column } = options;
+    const withTime = column.type === 'datetime';
+    let result = [...source];
+
+    // 1. Глобальный поиск
+    const globalFilter = this.normalizeGlobalFilter(options.globalFilter);
+    if (globalFilter.length) {
+      result = result.filter((row) =>
+        globalFilter.some((q) =>
+          Object.values(row).some((v) =>
+            String(this.getValueForFiltering(v) ?? '')
+              .toLowerCase()
+              .includes(q),
+          ),
+        ),
+      );
+    }
+
+    // 2. Фильтры по другим колонкам
+    if (options.filters && Object.keys(options.filters).length) {
+      result = this.applyFilters(result, options.filters);
+    }
+
+    // 3. Сбор уникальных дат
+    const uniqueTimestamps = new Set<number>();
+    for (const row of result) {
+      const raw = row[column.field];
+      if (raw == null) continue;
+
+      const values = Array.isArray(raw) ? raw : [raw];
+      for (const v of values) {
+        const d = this.toDate(v, withTime);
+        if (d === null) continue;
+        // Для date — обнуляем время, чтобы день был уникальным
+        const key = withTime
+          ? d.getTime()
+          : new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+        uniqueTimestamps.add(key);
+      }
+    }
+
+    if (uniqueTimestamps.size === 0) {
+      return of([]);
+    }
+
+    const dates = [...uniqueTimestamps].sort((a, b) => a - b).map((ts) => new Date(ts));
+
+    // 4. Построение дерева
+    const tree = this.buildDateTree(dates);
+
+    return of(tree);
+  }
+
+  /**
+   * Построение дерева год → месяц → день из массива дат.
+   * @param dates - уникальные даты, отсортированные по возрастанию
+   */
+  private buildDateTree(dates: Date[]): TreeNode[] {
+    const byYear = new Map<number, Map<number, Set<number>>>();
+
+    for (const d of dates) {
+      const y = d.getFullYear();
+      const m = d.getMonth() + 1; // 1..12
+      const day = d.getDate();
+
+      let months = byYear.get(y);
+      if (!months) {
+        months = new Map();
+        byYear.set(y, months);
+      }
+
+      let days = months.get(m);
+      if (!days) {
+        days = new Set();
+        months.set(m, days);
+      }
+
+      days.add(day);
+    }
+
+    // Годы по возрастанию
+    const years = [...byYear.keys()].sort((a, b) => a - b);
+
+    return years.map((year) => {
+      const monthsMap = byYear.get(year)!;
+      const months = [...monthsMap.keys()].sort((a, b) => a - b);
+
+      const monthNodes: TreeNode[] = months.map((month) => {
+        const daysSet = monthsMap.get(month)!;
+        const days = [...daysSet].sort((a, b) => a - b);
+
+        const dayNodes: TreeNode[] = days.map((day) => ({
+          key: `${year}-${this.pad(month)}-${this.pad(day)}`,
+          expanded: false,
+          leaf: true,
+          data: {
+            label: String(day),
+            type: 'day',
+            value: { year, month, day } as IDateFilterValue,
+          },
+        }));
+
+        return {
+          key: `${year}-${this.pad(month)}`,
+          expanded: false,
+          data: {
+            label: MONTH_NAMES_RU[month - 1],
+            type: 'month',
+            value: { year, month } as IDateFilterValue,
+          },
+          children: dayNodes,
+        };
+      });
+
+      return {
+        key: `${year}`,
+        expanded: false,
+        data: {
+          label: String(year),
+          type: 'year',
+          value: { year } as IDateFilterValue,
+        },
+        children: monthNodes,
+      };
+    });
+  }
+
+  /**
+   * Дополнение числа нулём слева до двух знаков.
+   * @param value - число
+   */
+  private pad(value: number): string {
+    return String(value).padStart(2, '0');
   }
 
   /**

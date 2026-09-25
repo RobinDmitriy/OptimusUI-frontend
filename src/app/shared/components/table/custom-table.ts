@@ -19,7 +19,7 @@ import { FormsModule } from '@angular/forms';
 import { InputText } from '@openng/optimus-ui/inputtext';
 import { Button } from '@openng/optimus-ui/button';
 import { ContextMenu } from '@openng/optimus-ui/contextmenu';
-import { MenuItem } from '@openng/optimus-ui/api';
+import { MenuItem, TreeNode } from '@openng/optimus-ui/api';
 import { TableService } from '../../services';
 import {
   IColumn,
@@ -94,6 +94,7 @@ export class CustomTable {
   resetFilters = signal<boolean>(false);
 
   possibleValues = signal<Record<string, IPossibleValue[]>>({});
+  possibleTrees = signal<Record<string, TreeNode[]>>({});
   possibleLoading = signal<Record<string, boolean>>({});
 
   multiSortMeta = signal<ISortMeta[]>([]);
@@ -128,6 +129,7 @@ export class CustomTable {
   });
 
   private possibleCache = new Map<string, IPossibleValue[]>();
+  private possibleTreesCache = new Map<string, TreeNode[]>();
   private tableService = inject(TableService);
 
   constructor() {
@@ -471,20 +473,18 @@ export class CustomTable {
   }
 
   /**
-   * Загрузка уникальных значений для колонки с учётом активных фильтров
-   * (кроме фильтра по самой колонке) и глобального поиска.
+   * Загрузка уникальных значений (список или дерево) для колонки
+   * с учётом активных фильтров (кроме фильтра по самой колонке) и глобального поиска.
    * @param field - код столбца таблицы
    */
   loadPossibleValues(field: string): void {
     const column = this.columns()?.find((c) => c.field === field);
     if (!column) return;
 
+    const isDate = column.type === 'date' || column.type === 'datetime';
+
     // Для типов, где список значений не имеет смысла — не грузим
-    if (
-      !['object', 'object[]', 'boolean', 'string', 'number', 'date', 'datetime'].includes(
-        column.type,
-      )
-    ) {
+    if (!isDate && !['object', 'object[]', 'boolean', 'string', 'number'].includes(column.type)) {
       this.possibleValues.update((m) => ({ ...m, [field]: [] }));
       return;
     }
@@ -492,6 +492,36 @@ export class CustomTable {
     const filters = this.filtersExcept(field, 'header');
     const key = this.buildPossibleCacheKey(field, filters, this.searchValue());
 
+    if (isDate) {
+      const cached = this.possibleTreesCache.get(key);
+      if (cached) {
+        this.possibleTrees.update((m) => ({ ...m, [field]: cached }));
+        return;
+      }
+
+      this.possibleLoading.update((m) => ({ ...m, [field]: true }));
+
+      this.tableService
+        .getPossibleDateTree(this.data(), {
+          column,
+          filters,
+          globalFilter: this.searchValue(),
+        })
+        .subscribe({
+          next: (tree) => {
+            this.possibleTreesCache.set(key, tree);
+            this.possibleTrees.update((m) => ({ ...m, [field]: tree }));
+            this.possibleLoading.update((m) => ({ ...m, [field]: false }));
+          },
+          error: () => {
+            this.possibleLoading.update((m) => ({ ...m, [field]: false }));
+          },
+        });
+
+      return;
+    }
+
+    // Не-даты: плоский список
     const cached = this.possibleCache.get(key);
     if (cached) {
       this.possibleValues.update((m) => ({ ...m, [field]: cached }));
@@ -563,7 +593,9 @@ export class CustomTable {
    */
   private clearPossibleCache(): void {
     this.possibleCache.clear();
+    this.possibleTreesCache.clear();
     this.possibleValues.set({});
+    this.possibleTrees.set({});
   }
   // ***********************************************************************************************
   // ******************************* Функции для обновления данных *********************************

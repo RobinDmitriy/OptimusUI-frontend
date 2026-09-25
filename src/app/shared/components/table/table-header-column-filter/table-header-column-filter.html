@@ -1,72 +1,66 @@
-<!--@if (!isDate()) {-->
 <div class="flex flex-col gap-3 w-60 p-2">
-  <!--  optionDisabled="disabled"-->
-  <p-listbox #listValues
-             [(ngModel)]="selectedFilterValues"
-             [checkbox]="true"
-             [filter]="options().length > 5"
-             [multiple]="true"
-             [options]="options()"
-             emptyFilterMessage="Данные не найдены"
-             class="w-full md:w-56"
-             id="listBox"
-             optionLabel="name"
-             optionValue="value"
-  >
-    <ng-template #item let-item>
-      @if (column().type === 'color') {
-        <div class="flex items-left justify-center gap-2">
-          <app-color-view [color]="item.value" />
-          <div>{{ item.name }}</div>
-        </div>
-      } @else {
-        <div>{{ item.name }}</div>
-      }
-    </ng-template>
-  </p-listbox>
-  <!--</div>-->
-  <!--} @else {-->
-  <!--  <div class="flex flex-col gap-3 w-60 p-2">-->
-  <!--    &lt;!&ndash;  optionDisabled="disabled"&ndash;&gt;-->
-  <!--    &lt;!&ndash;    [(selection)]="selectedFilterValues"&ndash;&gt;-->
-  <!--    <p-tree #treeValues-->
-  <!--            (selectionChange)="onSelectionChange($event)"-->
-  <!--            selectionMode="checkbox"-->
-  <!--            [filter]="true"-->
-  <!--            [value]="treeData()"-->
-  <!--            filterPlaceholder="Поиск"-->
-  <!--            filterBy="data.label"-->
-  <!--            class="w-full md:w-56"-->
-  <!--            id="treeValues"-->
-  <!--    >-->
-  <!--      <ng-template let-node pTemplate="default">-->
-  <!--        {{ node.data.label }}-->
-  <!--      </ng-template>-->
-  <!--    </p-tree>-->
+  @if (loading()) {
+    <div class="p-3 text-center text-sm">Загрузка...</div>
+  } @else if (isDate()) {
+    @if (treeData().length === 0) {
+      <div class="p-3 text-center text-sm">Нет данных</div>
+    } @else {
+      <p-tree (selectionChange)="onTreeSelectionChange($event)"
+              [selection]="selectedTreeNodes()"
+              [filter]="true"
+              [value]="treeData()"
+              selectionMode="checkbox"
+              emptyMessage="Данные отсутствуют"
+              filterPlaceholder="Поиск"
+              filterBy="data.label"
+              class="w-full md:w-56 p-0!"
+      >
+        <ng-template let-node pTemplate="default">
+          {{ node.data.label }}
+        </ng-template>
+      </p-tree>
+    }
+  } @else {
+    @if (options().length === 0) {
+      <div class="p-3 text-center text-sm">Нет данных</div>
+    } @else {
+      <p-listbox #listValues
+                 [(ngModel)]="selectedFilterValues"
+                 [checkbox]="true"
+                 [filter]="options().length > 5"
+                 [multiple]="true"
+                 [options]="options()"
+                 emptyFilterMessage="Данные не найдены"
+                 class="w-full md:w-56 border-none! shadow-none!"
+                 optionLabel="name"
+                 optionValue="value"
+      >
+        <ng-template #item let-item>
+          @if (column().type === 'color') {
+            <div class="flex items-left justify-center gap-2">
+              <app-color-view [color]="item.value" />
+              <div>{{ item.name }}</div>
+            </div>
+          } @else {
+            <div>{{ item.name }}</div>
+          }
+        </ng-template>
+      </p-listbox>
+    }
+  }
 
-  <!-- Кнопки внизу -->
-  <div class="flex justify-between gap-2 pt-2">
-    <!--    <p-button (onClick)="closePopover()"-->
-    <!--              label="Отменить"-->
-    <!--              variant="outlined"-->
-    <!--              severity="secondary"-->
-    <!--              size="small"-->
-    <!--    ></p-button>-->
-
-    <!--    <p-button (onClick)="applyFilter()"-->
-    <!--              label="Применить"-->
-    <!--              severity="contrast"-->
-    <!--              size="small"-->
-    <!--    ></p-button>-->
-
-    <p-button (onClick)="closePopover()"
-              label="Отменить"
+  <div class="flex justify-between gap-2">
+    <p-button (onClick)="clearFilter()"
+              label="Сбросить"
               variant="outlined"
+              severity="secondary"
+              size="small"
     ></p-button>
 
     <p-button (onClick)="applyFilter()"
               label="Применить"
+              severity="contrast"
+              size="small"
     ></p-button>
   </div>
 </div>
-<!--}-->

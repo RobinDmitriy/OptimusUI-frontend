@@ -62,3 +62,9 @@ export interface IFilterValue {
   value: any;
   matchMode: string;
 }
+
+export interface IDateFilterValue {
+  year: number;
+  month?: number;
+  day?: number;
+}
