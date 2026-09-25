@@ -465,10 +465,36 @@ export class TableService {
    * @param optionLabel - ключ текстового поля объекта
    */
   private matchObject(cell: any, value: any, matchMode: string, optionLabel = 'name'): boolean {
+    if (matchMode === 'in' && Array.isArray(value)) {
+      const cellValues = this.extractObjectValues(cell);
+      return value.some((v) => cellValues.some((cv) => String(cv) === String(v)));
+    }
+
+    if (matchMode === 'objectByOptionValue' && value != null) {
+      const cellValues = this.extractObjectValues(cell);
+      const list = Array.isArray(value) ? value : [value];
+      return list.some((v) => cellValues.some((cv) => String(cv) === String(v)));
+    }
+
     const labels = this.extractObjectLabels(cell, optionLabel);
     if (labels.length === 0) return false;
-
     return labels.some((label) => this.matchString(label, value, matchMode));
+  }
+
+  /**
+   * Значения объекта для сравнения по идентификатору (in / objectByOptionValue).
+   * Достаём id / value / code / key — то, что обычно используется как optionValue.
+   * @param cell - значение ячейки
+   */
+  private extractObjectValues(cell: any): any[] {
+    if (cell == null) return [];
+    if (Array.isArray(cell)) {
+      return cell.flatMap((item) => this.extractObjectValues(item));
+    }
+    if (typeof cell === 'object') {
+      return [cell.id, cell.value, cell.code, cell.key].filter((x) => x != null);
+    }
+    return [cell];
   }
 
   /**
