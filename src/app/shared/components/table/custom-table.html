@@ -220,7 +220,9 @@
               <!--                [frozen]="column.isLocked!"-->
               <!--                pFrozenColumn-->
               <!--            >-->
-            <th class="p-0! bg-(--p-surface-100)!">
+            <th class="p-0!"
+                [ngClass]="hasRowFilter()[column.field] ? 'bg-(--p-primary-50)!' : 'bg-(--p-surface-100)!'"
+            >
               <p-column-filter [field]="column.field"
                                [showMenu]="false"
               >

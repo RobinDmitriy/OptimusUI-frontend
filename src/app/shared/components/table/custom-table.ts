@@ -10,7 +10,7 @@ import {
   ViewChildren,
 } from '@angular/core';
 import { Table, TableLazyLoadEvent, TableModule } from '@openng/optimus-ui/table';
-import { DatePipe, NgTemplateOutlet } from '@angular/common';
+import { DatePipe, NgClass, NgTemplateOutlet } from '@angular/common';
 import { Card } from '@openng/optimus-ui/card';
 import { Toolbar } from '@openng/optimus-ui/toolbar';
 import { IconField } from '@openng/optimus-ui/iconfield';
@@ -56,6 +56,7 @@ interface IFetchOptions {
     TableRowFilter,
     TableHeaderColumnFilter,
     HeaderColumnFilterButton,
+    NgClass,
   ],
   selector: 'app-custom-table',
   styleUrl: './custom-table.css',
@@ -112,6 +113,16 @@ export class CustomTable {
       if (!header?.value) continue;
       if (header.matchMode !== 'in') continue;
       map[field] = Array.isArray(header.value) ? header.value : [header.value];
+    }
+    return map;
+  });
+  hasRowFilter = computed<Record<string, boolean>>(() => {
+    const filters = this.filters();
+    const map: Record<string, boolean> = {};
+    for (const [field, metas] of Object.entries(filters)) {
+      if (metas.some((m) => m.source === 'row' && this.isFilterFilled(m))) {
+        map[field] = true;
+      }
     }
     return map;
   });
