@@ -387,15 +387,16 @@ export class TableRowFilter implements OnInit, OnDestroy {
    * @private
    */
   private getStringFromRange(rangeValues: any[], type: string) {
-    if (type === 'number') {
-      return rangeValues.some((item) => item) ? rangeValues.join(' - ') : null;
-    } else {
-      if (rangeValues.some((item) => item == null)) return null;
-      const format = type === 'date' ? 'DD.MM.YYYY' : 'DD.MM.YYYY HH:mm:ss';
-      return rangeValues
-        .map((item, i) => (item ? dateToString(rangeValues[i], format) : null))
-        .join(' - ');
-    }
+    return rangeValues
+      .map((item, i) => {
+        if (type === 'number') {
+          return item ? rangeValues[i] : null;
+        } else {
+          const format = type === 'date' ? 'DD.MM.YYYY' : 'DD.MM.YYYY HH:mm:ss';
+          return item ? dateToString(rangeValues[i], format) : null;
+        }
+      })
+      .join(' - ');
   }
 
   /**
