@@ -218,23 +218,13 @@ export class TableService {
    */
   private applyFilters<T extends Record<string, any>>(
     data: T[],
-    filters: Record<string, IColumnFilterMeta>,
+    filters: Record<string, IColumnFilterMeta[]>,
   ): T[] {
     let result = data;
 
     for (const field of Object.keys(filters)) {
-      const raw = filters[field];
-      if (raw == null) continue;
-
-      // PrimeNG может прислать как одиночный FilterMetadata,
-      // так и массив FilterMetadata[] (мультифильтр по одному полю)
-      const metas: any[] = Array.isArray(raw) ? raw : [raw];
-      if (metas.length === 0) continue;
-
-      // operator верхнего уровня: если хоть один 'or' — используем ИЛИ,
-      // иначе (все 'and' или не задан) — И
-      const operator = metas[0]?.operator ?? 'and';
-      const useOr = operator === 'or';
+      const metas = filters[field];
+      if (!metas || metas.length === 0) continue;
 
       result = result.filter((row) => {
         const cell = row[field];
@@ -244,7 +234,7 @@ export class TableService {
           const matchMode = meta?.matchMode ?? 'contains';
           const type = meta?.type;
 
-          // пустые условия игнорируем
+          // Пустые условия игнорируем
           if (value == null || value === '') return null;
           if (Array.isArray(value) && value.length === 0) return null;
 
@@ -253,7 +243,7 @@ export class TableService {
 
         const active = checks.filter((c): c is boolean => c !== null);
         if (active.length === 0) return true;
-        return useOr ? active.some(Boolean) : active.every(Boolean);
+        return active.every(Boolean);
       });
     }
 
@@ -588,7 +578,7 @@ export class TableService {
     source: T[],
     options: {
       column: IColumn;
-      filters: Record<string, IColumnFilterMeta>;
+      filters: Record<string, IColumnFilterMeta[]>;
       globalFilter: string | null;
     },
   ): Observable<IPossibleValue[]> {

@@ -36,7 +36,6 @@ import { HeaderColumnFilterButton } from './header-column-filter-button/header-c
 interface IFetchOptions {
   first?: number;
   rows?: number;
-  filters?: Record<string, IColumnFilterMeta>;
   globalFilter?: string | null;
 }
 
@@ -88,9 +87,9 @@ export class CustomTable {
   loading = signal(false);
 
   activeFilterField = signal<string | null>(null);
-  filters = signal<Record<string, IColumnFilterMeta>>({});
+  filters = signal<Record<string, IColumnFilterMeta[]>>({});
   // multiFilterColumn = new Map<string, FilterMetadata | null>();
-  multiFilterColumn = signal<Record<string, IColumnFilterMeta>>({});
+  // multiFilterColumn = signal<Record<string, IColumnFilterMeta>>({});
   resetFilters = signal<boolean>(false);
 
   possibleValues = signal<Record<string, IPossibleValue[]>>({});
@@ -108,9 +107,11 @@ export class CustomTable {
   selectedFilterValues = computed<Record<string, any[]>>(() => {
     const filters = this.filters();
     const map: Record<string, any[]> = {};
-    for (const [field, meta] of Object.entries(filters)) {
-      if (!meta?.value) continue;
-      map[field] = Array.isArray(meta.value) ? meta.value : [meta.value];
+    for (const [field, metas] of Object.entries(filters)) {
+      const header = metas.find((m) => m.source === 'header');
+      if (!header?.value) continue;
+      if (header.matchMode !== 'in') continue;
+      map[field] = Array.isArray(header.value) ? header.value : [header.value];
     }
     return map;
   });
@@ -194,7 +195,6 @@ export class CustomTable {
     this.fetch({
       first: 0,
       rows: this.dt?.rows ?? 10,
-      filters: this.dt?.filters as Record<string, any>,
       globalFilter: this.searchValue() ?? null,
     });
   }
@@ -311,16 +311,96 @@ export class CustomTable {
   // ******************************* Функции для фильтрации данных *********************************
   // ***********************************************************************************************
   /**
+   * Приведение IFilterValue из дочернего фильтра к IColumnFilterMeta.
+   * @param column - колонка
+   * @param filterData - данные от дочернего компонента
+   */
+  private normalizeFilter(column: IColumn, filterData: IFilterValue): IColumnFilterMeta {
+    let filterValue = filterData.value;
+
+    switch (filterData.matchMode) {
+      case 'objectByOptionValue':
+        (this as any).context = { column };
+        filterValue = filterData.value;
+        break;
+      case 'in':
+        if (filterData.value) {
+          filterValue = Array.isArray(filterData.value) ? filterData.value : [filterData.value];
+        }
+        break;
+      case 'between':
+      default:
+        filterValue = filterData.value;
+    }
+
+    return {
+      value: filterValue,
+      matchMode: filterData.matchMode,
+      type: column.type,
+    };
+  }
+
+  /**
+   * Вставить или обновить фильтр для поля с учётом источника.
+   * Условие того же источника по тому же полю заменяется; условия других источников сохраняются.
+   * @param field - код столбца
+   * @param meta - данные фильтра
+   * @param source - источник ('row' | 'header')
+   */
+  private upsertFilter(field: string, meta: IColumnFilterMeta, source: 'row' | 'header'): void {
+    if (!this.isFilterFilled(meta)) {
+      this.removeFilter(field, source);
+      return;
+    }
+
+    const current = { ...this.filters() };
+    const list = [...(current[field] ?? [])];
+    const metaWithSource: IColumnFilterMeta = { ...meta, source };
+
+    const idx = list.findIndex((m) => m.source === source);
+    if (idx === -1) {
+      list.push(metaWithSource);
+    } else {
+      list[idx] = metaWithSource;
+    }
+
+    current[field] = list;
+    this.filters.set(current);
+  }
+
+  /**
+   * Удалить фильтр для поля по источнику. Если условий больше не осталось — удаляем поле целиком.
+   * @param field - код столбца
+   * @param source - источник ('row' | 'header')
+   */
+  private removeFilter(field: string, source: 'row' | 'header'): void {
+    const current = { ...this.filters() };
+    const list = (current[field] ?? []).filter((m) => m.source !== source);
+
+    if (list.length === 0) {
+      delete current[field];
+    } else {
+      current[field] = list;
+    }
+
+    this.filters.set(current);
+  }
+
+  /**
    * Проверка есть ли установленные фильтры
    * @param meta - данные фильтра
    * @private
    */
-  private isFilterFilled(meta: IColumnFilterMeta | undefined): boolean {
+  private isFilterFilled(meta?: IColumnFilterMeta | IColumnFilterMeta[] | null): boolean {
     if (!meta) return false;
+    if (Array.isArray(meta)) {
+      return meta.some((m) => this.isFilterFilled(m));
+    }
     const value = meta.value;
     if (value === null || value === undefined || value === '') return false;
-    if (Array.isArray(value))
+    if (Array.isArray(value)) {
       return value.length > 0 && value.some((x) => x !== null && x !== undefined && x !== '');
+    }
     return true;
   }
 
@@ -345,46 +425,8 @@ export class CustomTable {
    */
   onFilterChange(column: IColumn, filterData: IFilterValue) {
     console.log('onFilterChange filterData = ', filterData);
-    let filterValue;
-
-    switch (filterData.matchMode) {
-      case 'objectByOptionValue':
-        (this as any).context = { column };
-        filterValue = filterData.value;
-        break;
-      case 'in':
-        if (filterData.value) {
-          filterValue = Array.isArray(filterData.value) ? filterData.value : [filterData.value];
-        } else {
-          filterValue = filterData.value;
-        }
-        break;
-      case 'between':
-        filterValue = filterData.value; // для between ожидается массив [min, max]
-        break;
-      default:
-        // для equals, lt, gt, lte, gte и т.д. - просто значение
-        filterValue = filterData.value;
-    }
-
-    // Адаптируем фильтр для режима сравнения
-    let filter: IColumnFilterMeta = {
-      value: filterValue,
-      matchMode: filterData.matchMode,
-      operator: 'and',
-      type: column.type,
-    };
-
-    const currentFilters = { ...this.filters() };
-
-    if (this.isFilterFilled(filter)) {
-      currentFilters[column.field] = filter;
-    } else {
-      delete currentFilters[column.field];
-    }
-
-    this.filters.set(currentFilters);
-    console.log('onFilterChange filterData = ', filter);
+    const meta = this.normalizeFilter(column, filterData);
+    this.upsertFilter(column.field, meta, 'row');
     this.reloadFromFirstPage();
   }
 
@@ -400,38 +442,20 @@ export class CustomTable {
   }
 
   /**
-   * Количество выбранных значений фильтра для колонки.
-   * @param field - код столбца
-   */
-  getCountMultiFilterValue(field: string): number {
-    const meta = this.filters()[field];
-    if (!meta || !meta.value) return 0;
-    return Array.isArray(meta.value) ? meta.value.length : 1;
-  }
-
-  /**
    * Обработка применения фильтра из шапки таблицы.
    * @param column - колонка
    * @param filterData - данные фильтра из дочернего компонента
    */
   onHeaderFilterApply(column: IColumn, filterData: IColumnFilterMeta | null): void {
-    const currentFilters = { ...this.filters() };
-
     if (filterData && this.isFilterFilled(filterData)) {
-      currentFilters[column.field] = {
-        ...filterData,
-        type: column.type,
-        operator: filterData.operator ?? 'and',
-      };
+      this.upsertFilter(column.field, { ...filterData, type: column.type }, 'header');
     } else {
-      delete currentFilters[column.field];
+      this.removeFilter(column.field, 'header');
     }
 
     const button = this.filterButtons.find((b) => b.field() === column.field);
     button?.hidePopover();
-    this.activeFilterField.set(null);
 
-    this.filters.set(currentFilters);
     this.reloadFromFirstPage();
   }
 
@@ -454,7 +478,7 @@ export class CustomTable {
       return;
     }
 
-    const filters = this.filtersExcept(field);
+    const filters = this.filtersExcept(field, 'header');
     const key = this.buildPossibleCacheKey(field, filters, this.searchValue());
 
     const cached = this.possibleCache.get(key);
@@ -484,12 +508,29 @@ export class CustomTable {
   }
 
   /**
-   * Фильтры по всем колонкам, кроме указанной.
-   * @param field - код столбца, который исключаем
+   * Фильтры для построения списка значений колонки:
+   * исключаем только фильтр того же источника по этому же полю,
+   * чтобы список строился «поверх» уже отфильтрованных данных.
+   * @param field - код столбца
+   * @param source - источник фильтра, для которого строим список ('row' | 'header')
    */
-  private filtersExcept(field: string): Record<string, IColumnFilterMeta> {
-    const { [field]: _, ...rest } = this.filters();
-    return rest;
+  private filtersExcept(
+    field: string,
+    source: 'row' | 'header',
+  ): Record<string, IColumnFilterMeta[]> {
+    const filters = this.filters();
+    const result: Record<string, IColumnFilterMeta[]> = {};
+
+    for (const [f, metas] of Object.entries(filters)) {
+      if (f === field) {
+        const others = metas.filter((m) => m.source !== source);
+        if (others.length > 0) result[f] = others;
+      } else {
+        result[f] = metas;
+      }
+    }
+
+    return result;
   }
 
   /**
@@ -500,7 +541,7 @@ export class CustomTable {
    */
   private buildPossibleCacheKey(
     field: string,
-    filters: Record<string, IColumnFilterMeta>,
+    filters: Record<string, IColumnFilterMeta[]>,
     globalFilter: string | null,
   ): string {
     return JSON.stringify({ field, filters, globalFilter });
@@ -521,29 +562,30 @@ export class CustomTable {
    * @param event -данные события для обновления данных
    */
   loadData(event: TableLazyLoadEvent | null) {
-    console.log('loadData event = ', event);
     if (!event) return;
 
     if (event.filters) {
-      const next: Record<string, IColumnFilterMeta> = { ...this.filters() };
       const columns = this.columns() ?? [];
 
-      for (const [field, rawMeta] of Object.entries(
-        event.filters as Record<string, IColumnFilterMeta>,
-      )) {
+      for (const [field, raw] of Object.entries(event.filters as Record<string, any>)) {
         const column = columns.find((c) => c.field === field);
-        const meta = column ? { ...rawMeta, type: column.type } : rawMeta;
+        const metas: IColumnFilterMeta[] = Array.isArray(raw) ? raw : [raw];
 
-        if (this.isFilterFilled(meta)) next[field] = meta;
-        else delete next[field];
+        const normalized: IColumnFilterMeta[] = metas
+          .map((m) => (column ? { ...m, type: column.type } : m))
+          .filter((m) => this.isFilterFilled(m));
+
+        if (normalized.length === 0) {
+          this.removeFilter(field, 'row');
+        } else {
+          this.upsertFilter(field, normalized[0], 'row');
+        }
       }
-      this.filters.set(next);
     }
 
     this.fetch({
       first: event.first ?? 0,
       rows: event.rows ?? 10,
-      filters: this.filters(),
       globalFilter: event.globalFilter as string | null,
     });
   }
@@ -556,7 +598,6 @@ export class CustomTable {
     this.fetch({
       first: 0,
       rows: this.dt?.rows ?? 10,
-      filters: this.dt?.filters as Record<string, IColumnFilterMeta>,
       globalFilter: this.searchValue() ?? null,
     });
   }
@@ -576,11 +617,12 @@ export class CustomTable {
    */
   private fetch(options: IFetchOptions) {
     this.loading.set(true);
-    const mergedFilters = { ...(options.filters ?? {}), ...this.filters() };
 
-    const filters: Record<string, IColumnFilterMeta> = {};
-    for (const [field, meta] of Object.entries(mergedFilters)) {
-      if (this.isFilterFilled(meta)) filters[field] = meta;
+    const filters: Record<string, IColumnFilterMeta[]> = {};
+    for (const [field, metas] of Object.entries(this.filters())) {
+      const filled = metas.filter((m) => this.isFilterFilled(m));
+      if (filled.length === 0) continue;
+      filters[field] = filled;
     }
 
     this.tableService

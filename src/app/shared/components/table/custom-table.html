@@ -262,7 +262,7 @@
     <!--Шаблон фильтра в заголовке столбца-->
     <ng-template #columnFilter let-col>
       <app-header-column-filter-button (onClick)="onShowFilterMultiSelect($event, col.field)"
-                                       [count]="getCountMultiFilterValue(col.field)"
+                                       [count]="(selectedFilterValues()[col.field]?.length) ?? 0"
                                        [field]="col.field"
       >
         @if (activeFilterField() === col.field) {
