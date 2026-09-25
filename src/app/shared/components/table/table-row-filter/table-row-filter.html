@@ -1,35 +1,35 @@
 @switch (column().type) {
-  @case ('color') {
-    <p-select (onChange)="onColorChange($event.value)"
-              [ngModel]="value()"
-              [options]="getColorOptions"
-              [panelStyle]="{ 'width': '200px'}"
-              scrollHeight="220px"
-              appendTo="body"
-              class="text-sm font-normal w-full"
-              id="selectColor"
-              optionLabel="name"
-              optionValue="value"
-              panelStyleClass="text-sm"
-    >
-      <ng-template #selectedItem let-selectedOption>
-        @if (!selectedOption.value) {
-          <div>{{ selectedOption.name }}</div>
-        } @else {
-          <div class="flex items-left justify-center gap-2">
-            <app-color-view [color]="selectedOption.value" />
-            <div>{{ selectedOption.name }}</div>
-          </div>
-        }
-      </ng-template>
-      <ng-template #item let-row>
-        <div class="flex items-center gap-2">
-          <app-color-view [color]="row.value" />
-          <div>{{ row.name }}</div>
-        </div>
-      </ng-template>
-    </p-select>
-  }
+  <!--  @case ('color') {-->
+    <!--    <p-select (onChange)="onColorChange($event.value)"-->
+    <!--              [ngModel]="value()"-->
+    <!--              [options]="getColorOptions"-->
+    <!--              [panelStyle]="{ 'width': '200px'}"-->
+    <!--              scrollHeight="220px"-->
+    <!--              appendTo="body"-->
+    <!--              class="text-sm font-normal w-full"-->
+    <!--              id="selectColor"-->
+    <!--              optionLabel="name"-->
+    <!--              optionValue="value"-->
+    <!--              panelStyleClass="text-sm"-->
+    <!--    >-->
+    <!--      <ng-template #selectedItem let-selectedOption>-->
+    <!--        @if (!selectedOption.value) {-->
+    <!--          <div>{{ selectedOption.name }}</div>-->
+    <!--        } @else {-->
+    <!--          <div class="flex items-left justify-center gap-2">-->
+    <!--            <app-color-view [color]="selectedOption.value" />-->
+    <!--            <div>{{ selectedOption.name }}</div>-->
+    <!--          </div>-->
+    <!--        }-->
+    <!--      </ng-template>-->
+    <!--      <ng-template #item let-row>-->
+    <!--        <div class="flex items-center gap-2">-->
+    <!--          <app-color-view [color]="row.value" />-->
+    <!--          <div>{{ row.name }}</div>-->
+    <!--        </div>-->
+    <!--      </ng-template>-->
+    <!--    </p-select>-->
+    <!--  }-->
   @case ('object') {
     <!--    <p-select (onChange)="onValueChange($event.value)"-->
       <!--              [ngModel]="value()"-->
@@ -72,19 +72,19 @@
       </div>
     </div>
   }
-  @case ('object[]') {
-    <p-select (onChange)="onValueChange($event.value)"
-              [ngModel]="value()"
-              [options]="getOptions"
-              [panelStyle]="{ 'width': '200px' }"
-              size="small"
-              appendTo="body"
-              id="selectObject"
-              optionLabel="name"
-              optionValue="value"
-    >
-    </p-select>
-  }
+  <!--  @case ('object[]') {-->
+    <!--    <p-select (onChange)="onValueChange($event.value)"-->
+    <!--              [ngModel]="value()"-->
+    <!--              [options]="getOptions"-->
+    <!--              [panelStyle]="{ 'width': '200px' }"-->
+    <!--              size="small"-->
+    <!--              appendTo="body"-->
+    <!--              id="selectObject"-->
+    <!--              optionLabel="name"-->
+    <!--              optionValue="value"-->
+    <!--    >-->
+    <!--    </p-select>-->
+    <!--  }-->
   @case ('number') {
     <div class="relative">
       <div [class.active]="isInputFocused()"

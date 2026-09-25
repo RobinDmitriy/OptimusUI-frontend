@@ -74,13 +74,13 @@ export class TableHeaderColumnFilter {
     //   }
     // });
 
-    // effect(() => {
-    //   // console.log('effect this.options() = ', this.options());
-    //   this.selectedFilterValues = this.options()
-    //     .filter((item) => item.selected)
-    //     .map((item) => item.value);
-    //   // console.log('effect this.selectedFilterValues = ', this.selectedFilterValues);
-    // });
+    effect(() => {
+      console.log('effect this.options() = ', this.options());
+      //   this.selectedFilterValues = this.options()
+      //     .filter((item) => item.selected)
+      //     .map((item) => item.value);
+      //   // console.log('effect this.selectedFilterValues = ', this.selectedFilterValues);
+    });
     // effect(() => {
     //   untracked(() => {
     //     console.log('effect this.options() = ', this.options());

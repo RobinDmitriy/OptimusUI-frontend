@@ -689,10 +689,10 @@ export class TableService {
       const label = value[labelField] ?? value.name ?? value.id ?? '';
       const val = value[valueField] ?? value.id ?? value.name;
 
-      return { name: String(label), value: val, selected: false };
+      return { name: String(label), value: val };
     }
 
-    return { name: String(value), value, selected: false };
+    return { name: String(value), value };
   }
 
   /**

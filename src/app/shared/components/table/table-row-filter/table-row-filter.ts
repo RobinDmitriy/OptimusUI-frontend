@@ -11,7 +11,6 @@ import {
   signal,
   ViewChild,
 } from '@angular/core';
-import { Select } from '@openng/optimus-ui/select';
 import { FormsModule } from '@angular/forms';
 import { InputNumber } from '@openng/optimus-ui/inputnumber';
 import { DatePicker } from '@openng/optimus-ui/datepicker';
@@ -19,9 +18,8 @@ import { InputText } from '@openng/optimus-ui/inputtext';
 import { Menu } from '@openng/optimus-ui/menu';
 import { CustomIcon } from '../../custom-icon/custom-icon';
 import { NgClass } from '@angular/common';
-import { ColorView } from '../color-view/color-view';
 import { InputRange } from '../input-range/input-range';
-import { FILTER_TYPE_ITEMS, IColumn, IFilterValue, IPossibleValue } from '../../../constants';
+import { FILTER_TYPE_ITEMS, IColumn, IFilterValue } from '../../../constants';
 import { MenuItem } from '@openng/optimus-ui/api';
 import { dateToString, isDatePicker } from '../../../utils';
 import { IconField } from '@openng/optimus-ui/iconfield';
@@ -30,7 +28,6 @@ import { InputIcon } from '@openng/optimus-ui/inputicon';
 @Component({
   selector: 'app-table-row-filter',
   imports: [
-    Select,
     FormsModule,
     InputNumber,
     DatePicker,
@@ -38,7 +35,6 @@ import { InputIcon } from '@openng/optimus-ui/inputicon';
     Menu,
     CustomIcon,
     NgClass,
-    ColorView,
     InputRange,
     IconField,
     InputIcon,
@@ -54,7 +50,7 @@ export class TableRowFilter implements OnInit, OnDestroy {
 
   column = input.required<IColumn>();
   filterValue = input<any>(null);
-  options = input<IPossibleValue[]>([]);
+  // options = input<IPossibleValue[]>([]);
   reset = input<boolean>(false);
 
   rangeValue = signal<string | null>(null);
@@ -99,18 +95,18 @@ export class TableRowFilter implements OnInit, OnDestroy {
   /**
    * Получение списка возможных значений
    */
-  get getOptions() {
-    const all = { value: 0, name: '(Все)' };
-    return [all, ...this.options().filter((item) => !item.disabled)];
-  }
+  // get getOptions() {
+  //   const all = { value: 0, name: '(Все)' };
+  //   return [all, ...this.options().filter((item) => !item.disabled)];
+  // }
 
   /**
    * Получение списка возможных значений цветов
    */
-  get getColorOptions() {
-    const all = { value: null, name: '(Все)' };
-    return [all, ...this.options().filter((item) => !item.disabled)];
-  }
+  // get getColorOptions() {
+  //   const all = { value: null, name: '(Все)' };
+  //   return [all, ...this.options().filter((item) => !item.disabled)];
+  // }
 
   /**
    * Получение идентификатора меню поля фильтрации
